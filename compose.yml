@@ -1,0 +1,13 @@
+
+services:
+
+  dns-platform:
+    container_name: dns-platform
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dns-platform
+    ports:
+      - 8085:80
+      - 5053:53/udp
+      - 5053:53/tcp
