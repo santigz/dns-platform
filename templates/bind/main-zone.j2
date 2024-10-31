@@ -1,0 +1,16 @@
+$ORIGIN {{origin}}
+$TTL 60
+
+@  IN  SOA ns.{{origin}} admin.{{origin}} 1 60 60 60 60
+@  IN  NS  ns
+ns IN  A   {{ns_ip}}
+
+@      IN A     {{ns_ip}}
+
+
+{% for user in user_list %}
+; Delegation for user {{ user }}
+; {{user}}  IN  SOA ns.{{user}}.{{origin}} admin.{{user}}.{{origin}} 1 60 60 60 60
+{{user}}  IN  NS  ns.{{user}}
+ns.{{user}} IN  A   {{ns_ip}}
+{% endfor %}

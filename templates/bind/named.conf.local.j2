@@ -1,0 +1,11 @@
+zone "{{origin}}" {
+  type master;
+  file "/etc/bind/main-zone";
+};
+
+{% for user in user_list %}
+zone "{{user}}.{{origin}}" {
+  type master;
+  file "/etc/bind/user-zones/{{user}}";
+};
+{% endfor %}
