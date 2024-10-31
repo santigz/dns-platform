@@ -73,13 +73,28 @@ class ZoneManager(object):
     #     except dns.exception.DNSException as e:
     #         logger.error(f"Error reading zone file: {e}")
 
+    def user_zone_origin(self, username):
+        return username + '.' + self.origin;
+
     def get_user_zonefile(self, username: str) -> str:
         zonefile = Path(USER_ZONES_DIR) / username
         if not zonefile.exists():
             logger.info(f'Zone file does not exist for user: {username}')
             self.reset_user_zonefile(username)
             self.reset_bind_conf()
+        self.zonefile_to_json(str(zonefile))
         return zonefile.read_text()
+
+    def zonefile_to_json(self, zonefile: str):
+        zone = dns.zone.from_file(zonefile, relativize=False)
+        for (name, node) in zone.items():
+            print(name)
+            for rdset in node:
+                type = rdset.rdtype
+                print(f'{dns.rdatatype.to_text(rdset.rdtype)}')
+                for rr in rdset:
+                    print(f'rr {rr}')
+            print()
 
     def find_user_list(self):
         return [f.name for f in Path(USER_ZONES_DIR).iterdir() if f.is_file()]

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DNS Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+  <div class="container-md">
+    <h1>Hello, {{username}}</h1>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Root zone</h5>
+        <p class="card-text"><pre><code id="user-zone">{{user_zone}}</code></pre></p>
+      </div>
+    </div>
+    <br>
+    <div id="new-record-panel" class="mb-4">
+      <h5 class="card-title">Create new record</h5>
+      <ul class="nav nav-underline" id="recordTabs" role="tablist">
+        <li class="nav-item" role="presentation"><button class="nav-link active" id="a-tab" data-bs-toggle="tab"
+            data-bs-target="#a-record" type="button" role="tab" aria-selected="true">A</button></li>
+        <!-- <li class="nav-item" role="presentation"><button class="nav-link" id="aaaa-tab" data-bs-toggle="tab" -->
+        <!--     data-bs-target="#aaaa-record" type="button" role="tab" aria-selected="false" tabindex="-1">AAAA</button> -->
+        <!-- </li> -->
+        <li class="nav-item" role="presentation"><button class="nav-link" id="cname-tab" data-bs-toggle="tab"
+            data-bs-target="#cname-record" type="button" role="tab" aria-selected="false" tabindex="-1">CNAME</button>
+        </li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="mx-tab" data-bs-toggle="tab"
+            data-bs-target="#mx-record" type="button" role="tab" aria-selected="false" tabindex="-1">MX</button></li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="txt-tab" data-bs-toggle="tab"
+            data-bs-target="#txt-record" type="button" role="tab" aria-selected="false" tabindex="-1">TXT</button>
+        </li>
+        <!-- <li class="nav-item" role="presentation"><button class="nav-link" id="ns-tab" data-bs-toggle="tab" -->
+        <!--     data-bs-target="#ns-record" type="button" role="tab" aria-selected="false" tabindex="-1">NS</button></li> -->
+        <!-- <li class="nav-item" role="presentation"><button class="nav-link" id="srv-tab" data-bs-toggle="tab" -->
+        <!--     data-bs-target="#srv-record" type="button" role="tab" aria-selected="false" tabindex="-1">SRV</button> -->
+        <!-- </li> -->
+        <!-- <li class="nav-item" role="presentation"><button class="nav-link" id="caa-tab" data-bs-toggle="tab" -->
+        <!--     data-bs-target="#caa-record" type="button" role="tab" aria-selected="false" tabindex="-1">CAA</button> -->
+        <!-- </li> -->
+      </ul>
+      <div class="tab-content mt-3" id="recordTabContent">
+
+        <div class="tab-pane fade active show" id="a-record" role="tabpanel" aria-labelledby="a-tab">
+          <form id="a-record-form" autocomplete="off">
+            <div class="container">
+              <div class="row align-items-start">
+                <div class="col">
+                  <div class="mb-3">
+                    <label for="a-name" class="form-label">Hostname</label>
+                    <input type="text" class="form-control" id="a-name" preview="true" value="" required=""
+                      placeholder="Enter @ or hostname">
+                    <small class="form-text"><span id="a-name-preview">&nbsp;</span></small>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="mb-3">
+                    <label for="a-ip" class="form-label">IP Address</label>
+                    <input type="text" class="form-control" id="a-ip" value="" required="">
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="mb-3">
+                    <label for="a-ttl" class="form-label">TTL</label>
+                    <input type="number" class="form-control" id="a-ttl" value="60" required="" min="0">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
+                  <button type="button" class="btn btn-success">Create Record</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane fade show" id="cname-record" role="tabpanel" aria-labelledby="cname-tab">
+          <form id="a-record-form" autocomplete="off">
+            <div class="container">
+              <div class="row align-items-start">
+                <div class="col">
+                  <div class="mb-3">
+                    <label for="cname-name" class="form-label">Hostname</label>
+                    <input type="text" class="form-control" id="cname-name" value="" required=""
+                      placeholder="Enter hostname">
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="mb-3">
+                    <label for=cname-ip" class="form-label">Alias</label>
+                    <input type="text" class="form-control" id="cname-alias" preview="true" value="" required=""
+                      placeholder="Enter @ or hostname">
+                    <small class="form-text"><span id="cname-alias-preview">&nbsp;</span></small>
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="mb-3">
+                    <label for="cname-ttl" class="form-label">TTL</label>
+                    <input type="number" class="form-control" id="cname-ttl" value="60" required="" min="0">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
+                  <button type="button" class="btn btn-success">Create Record</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane fade show" id="mx-record" role="tabpanel" aria-labelledby="mx-tab">
+          <form id="mx-record-form" autocomplete="off">
+            <div class="container">
+              <div class="row align-items-start">
+                <div class="col">
+                  <div class="mb-3">
+                    <label for="mx-name" class="form-label">Hostname</label>
+                    <input type="text" class="form-control" id="mx-name" preview="true" value="" required=""
+                      placeholder="Enter @ or hostname">
+                    <small class="form-text"><span id="mx-name-preview">&nbsp;</span></small>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="mb-3">
+                    <label for="mx-ip" class="form-label">Mail server name</label>
+                    <input type="text" class="form-control" id="mx-ip" value="" required="">
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="mb-3">
+                    <label for="mx-priority" class="form-label">Priority</label>
+                    <input type="number" class="form-control" id="mx-priority" required="" min="0" placeholder="ej. 10">
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="mb-3">
+                    <label for="mx-ttl" class="form-label">TTL</label>
+                    <input type="number" class="form-control" id="mx-ttl" value="60" required="" min="0">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
+                  <button type="button" class="btn btn-success">Create Record</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane fade show" id="txt-record" role="tabpanel" aria-labelledby="txt-tab">
+          <form id="txt-record-form" autocomplete="off">
+            <div class="container">
+              <div class="row align-items-start">
+                <div class="col">
+                  <div class="mb-3">
+                    <label for="txt-value" class="form-label">Value</label>
+                    <input type="text" class="form-control" id="txt-value" value="" required=""
+                      placeholder="Paste TXT string here">
+                  </div>
+                </div>
+              </div>
+              <div class="row align-items-start">
+                <div class="col-4">
+                  <div class="mb-3">
+                    <label for="txt-name" class="form-label">Hostname</label>
+                    <input type="text" class="form-control" id="txt-name" preview="true" value="" required=""
+                      placeholder="Enter @ or hostname">
+                    <small class="form-text"><span id="txt-name-preview">&nbsp;</span></small>
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="mb-3">
+                    <label for="txt-ttl" class="form-label">TTL</label>
+                    <input type="number" class="form-control" id="txt-ttl" value="60" required="" min="0">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col">
+                  <button type="button" class="btn btn-success">Create Record</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+  <script src="/static/js/zonefile.js"></script>
+  <script>
+    const user_origin = '{{user_origin}}';
+    // Live preview for name input with suffix ".example.com"
+    document.querySelectorAll('input[preview$="true"]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const preview = document.getElementById(`${e.target.id}-preview`);
+        name = e.target.value;
+        if (!name) {
+          preview.textContent = '\xa0';
+          return;
+        }
+        if (name == '@') {
+          preview.textContent = user_origin;
+          return;
+        }
+        if (name.slice(-1) == '.') {
+          preview.textContent = e.target.value;
+          return;
+        }
+        preview.textContent = e.target.value + '.' + user_origin;
+      });
+    });
+  </script>
+</body>
+
+</html>

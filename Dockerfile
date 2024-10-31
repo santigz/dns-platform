@@ -4,8 +4,10 @@ RUN apt-get update && apt-get install -y bind9 dnsutils
 WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-COPY ./templates /code/templates
-COPY ./app /code/app
+COPY . /code/
+# COPY ./templates /code/templates
+# COPY ./static /code/static
+# COPY ./app /code/app
 
 # Run directly
 # CMD ["fastapi", "run", "app/main.py", "--port", "80"]

@@ -13,3 +13,5 @@ services:
       - 5053:53/tcp
     environment:
       - ROOT_DOMAIN=infor.tiernogalvan.es
+    volumes:
+      - .:/code

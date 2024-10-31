@@ -3,24 +3,34 @@ from typing import Union
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 from .dns_manager import ZoneManager
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 templates = Jinja2Templates(directory="templates/html/")
 zonemgr = ZoneManager()
 
 TESTING = True
 
 @app.get('/', response_class=HTMLResponse)
-def read_root(request: Request):
+async def read_root(request: Request):
     username = request.headers.get('REMOTE_USER')
     if TESTING:
         username = 'user'
     if not username:
-        return 'LANDING PAGE: not registered.'
+        return templates.TemplateResponse(
+            request=request, name="index.html", context={"username": username}
+        )
+    context = {
+            "username": username,
+            "user_origin": zonemgr.user_zone_origin(username),
+            "user_zone": zonemgr.get_user_zonefile(username),
+            }
     return templates.TemplateResponse(
-        request=request, name="index.html", context={"username": username}
+        request=request, name="user.html", context=context
     )
 
 @app.get('/zone_file', response_class=PlainTextResponse)
