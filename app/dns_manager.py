@@ -4,6 +4,7 @@ import dns.zone
 import logging
 import os
 import requests
+import traceback
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
@@ -24,6 +25,15 @@ logging.basicConfig(level=logging.DEBUG)
 
 class PublicIpNotFound(Exception):
     pass
+
+class BadZoneFile(Exception):
+    pass
+
+class ZoneFileCheckError(Exception):
+    pass
+
+
+
 
 
 class ZoneManager(object):
@@ -82,19 +92,18 @@ class ZoneManager(object):
             logger.info(f'Zone file does not exist for user: {username}')
             self.reset_user_zonefile(username)
             self.reset_bind_conf()
-        self.zonefile_to_json(str(zonefile))
         return zonefile.read_text()
 
-    def zonefile_to_json(self, zonefile: str):
-        zone = dns.zone.from_file(zonefile, relativize=False)
-        for (name, node) in zone.items():
-            print(name)
-            for rdset in node:
-                type = rdset.rdtype
-                print(f'{dns.rdatatype.to_text(rdset.rdtype)}')
-                for rr in rdset:
-                    print(f'rr {rr}')
-            print()
+    # def zonefile_to_json(self, zonefile: str):
+    #     zone = dns.zone.from_file(zonefile, relativize=False)
+    #     for (name, node) in zone.items():
+    #         print(name)
+    #         for rdset in node:
+    #             type = rdset.rdtype
+    #             print(f'{dns.rdatatype.to_text(rdset.rdtype)}')
+    #             for rr in rdset:
+    #                 print(f'rr {rr}')
+    #         print()
 
     def find_user_list(self):
         return [f.name for f in Path(USER_ZONES_DIR).iterdir() if f.is_file()]
@@ -102,6 +111,29 @@ class ZoneManager(object):
     def reset_main_zone(self):
         user_list = self.find_user_list()
         self.reset_zonefile(self.origin, ZONEFILE_TEMPLATE, MAIN_ZONE_FILE, user_list)
+
+    def set_user_zonefile(self, username: str, zone_data: str) -> None:
+        origin = username + '.' + self.origin
+        tmp_zonefile = Path(USER_ZONES_DIR) / Path(username + '.tmp')
+        try:
+            tmp_zonefile.write_text(zone_data)
+            (ok, msg) = NamedManager.named_checkzone(origin, tmp_zonefile)
+        except OSError as e:
+            logger.error(f'OSError setting zone file for {username}:\n{zone_data}')
+            tmp_zonefile.unlink(missing_ok=True)
+            # logger.error(traceback.print_exc())
+            raise Exception('Internal system error')
+        except Exception as e:
+            logger.error(f'Generic error setting zone file for {username}:\n{zone_data}')
+            # logger.error(traceback.print_exc())
+            tmp_zonefile.unlink(missing_ok=True)
+            raise ZoneFileCheckError('Unknown error checking the zone')
+        if not ok:
+            logger.warning(f'Bad zone file for {username}:\n{zone_data}')
+            tmp_zonefile.unlink(missing_ok=True)
+            raise BadZoneFile(msg)
+        zonefile = Path(USER_ZONES_DIR) / username
+        tmp_zonefile.replace(zonefile)
 
     def reset_user_zonefile(self, username: str) -> None:
         origin = username + '.' + self.origin

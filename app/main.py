@@ -1,11 +1,16 @@
-from typing import Union
+import logging
+import traceback
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from typing import Union
 
-from .dns_manager import ZoneManager
+from .dns_manager import ZoneManager, BadZoneFile
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -46,12 +51,31 @@ def read_user_zone(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get('/reset_zone')
-def reset_zone(request: Request):
+@app.put('/zonefile')
+async def set_user_zone(request: Request):
     username = request.headers.get('REMOTE_USER')
+    if TESTING:
+        username = 'user'
     if not username:
-        return {'ERROR': 'Unknown user'}
-    zonemgr.reset_user_zonefile()
+        return PlainTextResponse('', status_code=401)
+    data = await request.body()
+    data_str = data.decode("utf-8")
+    logger.info(f'Set zone for {username}:\n{data_str}')
+    try:
+        zonemgr.set_user_zonefile(username, data_str)
+    except BadZoneFile as e:
+        logger.error(f'Bad zone in set_user_zone:\n{data_str}')
+        logger.error(traceback.print_exc())
+        raise HTTPException(status_code=400, detail={'error': 'Bad zone file', 'message': str(e)})
+    except Exception as e:
+        logger.error(f'Exception setting zone file:\n{data_str}')
+        logger.error(traceback.print_exc())
+        raise HTTPException(status_code=402, detail={'error': 'Internal error', 'message': str(e)})
+
+
+@app.post("/update_zone_file/")
+async def update_zone_file(item: str):
+    logger.debug(item)
 
 @app.get('/items/{item_id}')
 def read_item(item_id: int, q: Union[str, None] = None):

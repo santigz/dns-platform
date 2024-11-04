@@ -1,6 +1,10 @@
 import subprocess
 
 
+class NamedError(Exception):
+    pass
+
+
 class NamedManager(object):
 
     @classmethod
@@ -16,6 +20,7 @@ class NamedManager(object):
         - msg: message in case of error
         '''
         proc = subprocess.run(['named-checkconf'], 
+                              timeout=10,
                               stdout=subprocess.PIPE, 
                               stderr=subprocess.STDOUT,
                               text=True)
@@ -27,6 +32,7 @@ class NamedManager(object):
     @classmethod
     def named_checkzone(cls, origin, zone_file) -> tuple[bool, str]:
         proc = subprocess.run(['named-checkzone', origin, zone_file], 
+                              timeout=10,
                               stdout=subprocess.PIPE, 
                               stderr=subprocess.STDOUT,
                               text=True)

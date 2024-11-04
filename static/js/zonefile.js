@@ -1,51 +1,23 @@
 // https://github.com/elgs/dns-zonefile
 //
 const defaultTemplate = `; Zone: {zone}
-; Exported  (yyyy-mm-ddThh:mm:ss.sssZ): {datetime}
+; Last modified {datetime}
 
 {$origin}
 {$ttl}
 
-; SOA Record
-{name} {ttl}	IN	SOA	{mname}{rname}(
-{serial} ;serial
-{refresh} ;refresh
-{retry} ;retry
-{expire} ;expire
-{minimum} ;minimum ttl
-)
+{name} {ttl}  IN  SOA {mname} {rname} ({serial} {refresh} {retry} {expire} {minimum})
 
-; NS Records
 {ns}
-
-; MX Records
 {mx}
-
-; A Records
 {a}
-
-; AAAA Records
 {aaaa}
-
-; CNAME Records
 {cname}
-
-; PTR Records
 {ptr}
-
-; TXT Records
 {txt}
-
-; SRV Records
 {srv}
-
-; SPF Records
 {spf}
-
-; CAA Records
 {caa}
-
-; DS Records
 {ds}
 
 `;
@@ -107,7 +79,7 @@ let processSOA = function (data, template) {
   data.name = data.name || '@';
   data.ttl = data.ttl || '';
   Object.keys(data).map(key => {
-    ret = ret.replace('{' + key + '}', data[key] + '\t');
+    ret = ret.replace('{' + key + '}', data[key]);
   });
   return ret;
 };
