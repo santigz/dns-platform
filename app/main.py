@@ -18,7 +18,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates/html/")
 zonemgr = ZoneManager()
 
-TESTING = True
+TESTING = False
 
 @app.get('/', response_class=HTMLResponse)
 async def read_root(request: Request):
@@ -71,12 +71,3 @@ async def set_user_zone(request: Request):
         logger.error(f'Exception setting zone file:\n{data_str}')
         logger.error(traceback.print_exc())
         raise HTTPException(status_code=402, detail={'error': 'Internal error', 'message': str(e)})
-
-
-@app.post("/update_zone_file/")
-async def update_zone_file(item: str):
-    logger.debug(item)
-
-@app.get('/items/{item_id}')
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
