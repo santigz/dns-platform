@@ -1,5 +1,12 @@
 FROM python:3.10
-RUN apt-get update && apt-get install -y bind9 dnsutils
+
+ENV TZ=UTC
+
+RUN apt-get update && \
+    apt-get install -y bind9 dnsutils tzdata
+
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
 
 WORKDIR /code
 COPY ./requirements.txt /code/requirements.txt

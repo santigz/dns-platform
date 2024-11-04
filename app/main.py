@@ -5,26 +5,35 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic_settings import BaseSettings
 from typing import Union
 
 from .dns_manager import ZoneManager, BadZoneFile
 
+
+class Settings(BaseSettings):
+    root_domain: str = "example.com."
+    testing_mode: bool = True
+    testing_user: str = 'user'
+
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
+settings = Settings()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates/html/")
-zonemgr = ZoneManager()
+zonemgr = ZoneManager(settings.root_domain)
 
 TESTING = False
 
 @app.get('/', response_class=HTMLResponse)
 async def read_root(request: Request):
     username = request.headers.get('REMOTE_USER')
-    if TESTING:
-        username = 'user'
+    if not username and settings.testing_mode:
+        username = settings.testing_user
     if not username:
         return templates.TemplateResponse(
             request=request, name="index.html", context={"username": username}
@@ -38,11 +47,12 @@ async def read_root(request: Request):
         request=request, name="user.html", context=context
     )
 
-@app.get('/zone_file', response_class=PlainTextResponse)
+
+@app.get('/zonefile', response_class=PlainTextResponse)
 def read_user_zone(request: Request):
     username = request.headers.get('REMOTE_USER')
-    if TESTING:
-        username = 'user'
+    if not username and settings.testing_mode:
+        username = settings.testing_user
     if not username:
         return PlainTextResponse('', status_code=401)
     try:
@@ -51,11 +61,12 @@ def read_user_zone(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.put('/zonefile')
 async def set_user_zone(request: Request):
     username = request.headers.get('REMOTE_USER')
-    if TESTING:
-        username = 'user'
+    if not username and settings.testing_mode:
+        username = settings.testing_user
     if not username:
         return PlainTextResponse('', status_code=401)
     data = await request.body()
@@ -64,10 +75,11 @@ async def set_user_zone(request: Request):
     try:
         zonemgr.set_user_zonefile(username, data_str)
     except BadZoneFile as e:
-        logger.error(f'Bad zone in set_user_zone:\n{data_str}')
-        logger.error(traceback.print_exc())
+        logger.error(f'Bad zone for {username}:\n{str(e)}')
+        # logger.error(traceback.print_exc())
         raise HTTPException(status_code=400, detail={'error': 'Bad zone file', 'message': str(e)})
     except Exception as e:
-        logger.error(f'Exception setting zone file:\n{data_str}')
-        logger.error(traceback.print_exc())
+        logger.error(f'Exception setting zone file for {username}:\n{str(e)}')
+        # logger.error(traceback.print_exc())
         raise HTTPException(status_code=402, detail={'error': 'Internal error', 'message': str(e)})
+

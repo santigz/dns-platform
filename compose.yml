@@ -8,10 +8,11 @@ services:
       dockerfile: Dockerfile
     image: dns-platform
     ports:
-      - 8085:80
+      - 8053:80
       - 5053:53/udp
       - 5053:53/tcp
     environment:
+      - TZ=Europe/Madrid
       - ROOT_DOMAIN=infor.tiernogalvan.es
     volumes:
       - .:/code

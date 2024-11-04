@@ -1,3 +1,8 @@
+import shutil
+import hmac
+import hashlib
+import secrets
+import base64
 import dns.exception
 import dns.resolver
 import dns.zone
@@ -9,14 +14,17 @@ import traceback
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
-from .named_manager import NamedManager
+from .named_manager import NamedManager, NamedCheckConfError, NamedCheckZoneError, NamedReloadError
 
+BIND_DIR = '/etc/bind/'
 MAIN_ZONE_FILE = '/etc/bind/main-zone'
-MAIN_CONFIG_FILE = '/etc/bind/named.conf.local'
 USER_ZONES_DIR = '/etc/bind/user-zones'
 TEMPLATES_DIR = '/code/templates/bind'
 ZONEFILE_TEMPLATE = 'main-zone.j2'
-MAIN_CONFIG_TEMPLATE = 'named.conf.local.j2'
+NAMED_CONF_TEMPLATE = 'named.conf.j2'
+NAMED_CONF_LOCAL_TEMPLATE = 'named.conf.local.j2'
+NAMED_CONF_RNDC_TEMPLATE = 'named.conf.rndc.j2'
+RNDC_CONF_TEMPLATE = 'rndc.conf.j2'
 USER_ZONE_TEMPLATE = 'user-zone.j2'
 
 logger = logging.getLogger(__name__)
@@ -32,25 +40,24 @@ class BadZoneFile(Exception):
 class ZoneFileCheckError(Exception):
     pass
 
-
-
-
-
 class ZoneManager(object):
     
-    def __init__(self) -> None:
+    def __init__(self, origin) -> None:
         self._public_ip = None
-        self.origin = os.getenv('ROOT_DOMAIN', 'example.com.')
+        self.origin = origin
         if not self.origin.endswith('.'):
             self.origin += '.'
         logger.info(f'ORIGIN {self.origin}')
         self.jinja_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
-        # user_list = [f for f in Path(USER_ZONES_DIR).iterdir()],
-        user_list = ['test', 'santi']
         Path(USER_ZONES_DIR).mkdir(exist_ok=True)
         self.full_reset()
-        # self.load_root_zone()
+        try:
+            NamedManager.named_checkconf()
+            NamedManager.run()
+        except NamedCheckConfError as e:
+            logger.error(f'ERROR in named-checkconf!!!!!!\n{e}')
+            raise
 
     @property
     def public_ip(self) -> str | None:
@@ -66,6 +73,7 @@ class ZoneManager(object):
         self.reset_main_zone()
         self.reset_all_user_zonefiles()
         self.reset_bind_conf()
+        self.reset_rndc()
 
     # def load_root_zone(self) -> None:
     #     self.root = dns.zone.from_file(MAIN_ZONE_FILE, relativize=False)
@@ -117,23 +125,40 @@ class ZoneManager(object):
         tmp_zonefile = Path(USER_ZONES_DIR) / Path(username + '.tmp')
         try:
             tmp_zonefile.write_text(zone_data)
-            (ok, msg) = NamedManager.named_checkzone(origin, tmp_zonefile)
-        except OSError as e:
-            logger.error(f'OSError setting zone file for {username}:\n{zone_data}')
+            msg = NamedManager.named_checkzone(origin, tmp_zonefile)
+        except OSError:
             tmp_zonefile.unlink(missing_ok=True)
-            # logger.error(traceback.print_exc())
-            raise Exception('Internal system error')
-        except Exception as e:
-            logger.error(f'Generic error setting zone file for {username}:\n{zone_data}')
-            # logger.error(traceback.print_exc())
+            raise Exception('Internal file system error.')
+        except NamedCheckZoneError as e:
             tmp_zonefile.unlink(missing_ok=True)
-            raise ZoneFileCheckError('Unknown error checking the zone')
-        if not ok:
-            logger.warning(f'Bad zone file for {username}:\n{zone_data}')
+            raise BadZoneFile(e)
+        except Exception:
             tmp_zonefile.unlink(missing_ok=True)
-            raise BadZoneFile(msg)
+            raise ZoneFileCheckError('Unknown error checking the zone.')
         zonefile = Path(USER_ZONES_DIR) / username
+        try:
+            self.replace_zone_if_reloads(tmp_zonefile, username)
+        except NamedReloadError as e:
+            raise BadZoneFile('Zone seems OK but there was an error reloading Bind.')
+
+    def replace_zone_if_reloads(self, tmp_zonefile: Path, username: str) -> None:
+        zonefile = Path(USER_ZONES_DIR) / username
+        zonefile_backup = zonefile.with_suffix('.orig')
+        shutil.copy2(zonefile, zonefile_backup)
         tmp_zonefile.replace(zonefile)
+        try:
+            NamedManager.reload()
+            zonefile_backup.unlink()
+        except NamedReloadError:
+            contents = zonefile.read_text()
+            logger.error(f'Passed named-checkzone but reload error for user {username}:\n{contents}')
+            shutil.copy2(zonefile_backup, zonefile)
+            try:
+                NamedManager.reload()
+            except NamedReloadError:
+                logger.error(f'VERY BAD SITUATION: failed reverting a reload error for user {username}. ******')
+                raise
+            raise
 
     def reset_user_zonefile(self, username: str) -> None:
         origin = username + '.' + self.origin
@@ -153,21 +178,29 @@ class ZoneManager(object):
         zone = template.render(data)
         Path(zonefile).write_text(zone)
 
+
     def reset_bind_conf(self) -> None:
         '''Reads all user names from `users_dir` and resets bind config config for their zones.'''
         user_list = self.find_user_list()
-        self.reset_bind_conf_users(MAIN_CONFIG_TEMPLATE, MAIN_CONFIG_FILE, user_list)
+        # self.reset_bind_conf_users(NAMED_CONF_LOCAL_TEMPLATE, NAMED_CONF_LOCAL_FILE, user_list)
+        self.write_template(NAMED_CONF_LOCAL_TEMPLATE, 
+                            BIND_DIR, 
+                            { 
+                                'origin': self.origin, 
+                                'user_list': user_list,
+                            })
 
-    def reset_bind_conf_users(self, template_file: str, conf_file: str, user_list: list[str]) -> None:
-        logger.info(f'Resetting bind config {conf_file}')
-        template = self.jinja_env.get_template(template_file)
-        data = { 
-                'origin': self.origin, 
-                'user_list': user_list,
-                }
-        print(data)
-        data = template.render(data)
-        Path(conf_file).write_text(data)
+
+    # def reset_bind_conf_users(self, template_file: str, conf_file: str, user_list: list[str]) -> None:
+    #     logger.info(f'Resetting bind config {conf_file}')
+    #     template = self.jinja_env.get_template(template_file)
+    #     data = { 
+    #             'origin': self.origin, 
+    #             'user_list': user_list,
+    #             }
+    #     print(data)
+    #     data = template.render(data)
+    #     Path(conf_file).write_text(data)
 
     def reset_all_user_zonefiles(self) -> None:
         '''Remove all user zone files and create new ones for user_list'''
@@ -194,4 +227,23 @@ class ZoneManager(object):
                     return response.text
             except requests.RequestException as e:
                 raise PublicIpNotFound(e)
+
+
+    def write_template(self, template, dir, data):
+        name, extension = os.path.splitext(template)
+        if extension != '.j2':
+            logger.error(f'Template file should have .j2 extension: {template}')
+        template = self.jinja_env.get_template(template)
+        data = template.render(data)
+        file = Path(dir) / name
+        Path(file).write_text(data)
+
+
+    def reset_rndc(self):
+        secret_raw = secrets.token_bytes(32)
+        rndc_secret = base64.b64encode(secret_raw).decode()
+        data = {'rndc_secret': rndc_secret}
+        self.write_template(RNDC_CONF_TEMPLATE, BIND_DIR, data)
+        self.write_template(NAMED_CONF_RNDC_TEMPLATE, BIND_DIR, data)
+        self.write_template(NAMED_CONF_TEMPLATE, BIND_DIR, {})
 
