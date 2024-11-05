@@ -18,6 +18,7 @@ from .named_manager import NamedManager, NamedCheckConfError, NamedCheckZoneErro
 
 BIND_DIR = '/etc/bind/'
 MAIN_ZONE_FILE = '/etc/bind/main-zone'
+CUSTOM_RRS_FILE = '/etc/bind/custom-records'
 USER_ZONES_DIR = '/etc/bind/user-zones'
 TEMPLATES_DIR = '/code/templates/bind'
 ZONEFILE_TEMPLATE = 'main-zone.j2'
@@ -49,14 +50,17 @@ class ZoneManager(object):
             self.origin += '.'
         logger.info(f'ORIGIN {self.origin}')
         self.jinja_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
-
         Path(USER_ZONES_DIR).mkdir(exist_ok=True)
         self.full_reset()
         try:
             NamedManager.named_checkconf()
+            NamedManager.named_checkzone(self.origin, MAIN_ZONE_FILE)
             NamedManager.run()
         except NamedCheckConfError as e:
             logger.error(f'ERROR in named-checkconf!!!!!!\n{e}')
+            raise
+        except NamedCheckZoneError as e:
+            logger.error(f'ERROR in named-checkzone in main zone!!!!!!\n{e}')
             raise
 
     @property
@@ -165,15 +169,23 @@ class ZoneManager(object):
         zonefile = Path(USER_ZONES_DIR) / username
         self.reset_zonefile(origin, USER_ZONE_TEMPLATE, zonefile)
 
+    def custom_records(self):
+        try:
+            return Path(CUSTOM_RRS_FILE).read_text()
+        except:
+            return ''
+
     def reset_zonefile(self, origin: str, zone_template: str, zonefile: str|Path, user_list: list[str] = []) -> None:
         logger.info(f'Resetting zone {zonefile}')
         if not self.public_ip:
             return
         template = self.jinja_env.get_template(zone_template)
+        # TODO: get custom records only for main zone, not for all
         data = {
                 'origin': origin,
                 'ns_ip': self.public_ip,
                 'user_list': user_list,
+                'custom_records': self.custom_records(),
                 }
         zone = template.render(data)
         Path(zonefile).write_text(zone)
@@ -207,7 +219,7 @@ class ZoneManager(object):
         users_dir = USER_ZONES_DIR
         logger.info(f'Resetting user zones dir {users_dir}')
         try:
-            os.rmdir(users_dir)
+            shutil.rmtree(users_dir)
             os.mkdir(users_dir)
         except Exception as e:
             logger.error(f'Error resetting user zone dir {users_dir}: {e}')
