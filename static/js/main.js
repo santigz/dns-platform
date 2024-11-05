@@ -35,24 +35,32 @@ function ttl_html(ttl, zone_ttl) {
   * @param {string} [name="zone_ttl"] - Global $TTL of the zone, used when record's TTL is unknown.
   * @returns {string} HTML code for the table row.
   */
-function zone_table_row(type, name, value, ttl, zone_ttl, id) {
+function zone_table_row(type, name, value, ttl, zone_ttl, id, deletable=false) {
   type = type ?? '&nbsp;';
   name = name ?? '&nbsp;';
   value = value ?? '&nbsp;';
   ttl_show = ttl_html(ttl, zone_ttl)
-  return `
+  html = `
           <tr>
               <th scope="row">${type}</th>
               <td>${name}</td>
               <td>${value}</td>
               <td>${ttl_show}</td>
-              <td class="text-end">
+        `;
+  if (deletable) {
+    html += ` <td class="text-end">
                   <button class="btn btn-sm btn-outline-danger" rr_id="${id}" onclick="delete_rr(this)">
                   <i class="bi bi-trash"></i> Delete
                 </button>
-              </td>
-          </tr>
-        `;
+              </td>`;
+  } else {
+    html += ` <td class="text-end">
+                  <small class="text-body-secondary">Not deletable</small>
+                </button>
+              </td>`;
+  }
+  html += '</tr>';
+  return html;
 }
 
 
@@ -159,6 +167,16 @@ function rebuild_zone(button, new_zone) {
   });
 }
 
+function is_rr_deletable(type, rr, soa) {
+  soa_ns = soa.mname.split('.')[0];
+  if (type == 'ns' && rr.name == '@' && rr.host == soa_ns) {
+    return false;
+  }
+  if (type == 'a' && rr.name == soa_ns) {
+    return false;
+  }
+  return true;
+}
 
 /**
   * Takes the current `zone` variable and rebuilds the zone table accordingly.
@@ -178,19 +196,22 @@ function build_zone_table() {
       } else {
         rr_name = rr['name'];
       }
-      rows_html += zone_table_row('NS', rr_name, rr['host'], rr['ttl'], zone_ttl, rr.id);
+      deletable = is_rr_deletable('ns', rr, zone.soa);
+      rows_html += zone_table_row('NS', rr_name, rr['host'], rr['ttl'], zone_ttl, rr.id, deletable);
     }
   }
   if ('a' in zone) {
     for (const rr of zone['a']) {
       rr.id = rr_id++;
-      rows_html += zone_table_row('A', rr['name'], rr['ip'], rr['ttl'], zone_ttl, rr.id);
+      deletable = is_rr_deletable('a', rr, zone.soa);
+      rows_html += zone_table_row('A', rr['name'], rr['ip'], rr['ttl'], zone_ttl, rr.id, deletable);
     }
   }
   if ('aaaa' in zone) {
     for (const rr of zone['aaaa']) {
       rr.id = rr_id++;
-      rows_html += zone_table_row('AAAA', rr['name'], rr['ip'], rr['ttl'], zone_ttl, rr.id);
+      deletable = is_rr_deletable('aaaa', rr, zone.soa);
+      rows_html += zone_table_row('AAAA', rr['name'], rr['ip'], rr['ttl'], zone_ttl, rr.id, deletable);
     }
   }
   if ('cname' in zone) {
@@ -351,14 +372,14 @@ function validate_ttl(input) {
 }
 
 function validate_a(input) {
-  // const ipPattern = /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}$/;
-  // if (ipPattern.test(input.value)) {
-  //   input.classList.remove('is-invalid');
-  //   disable_closest_button(input, disabled = false);
-  // } else {
-  //   input.classList.add('is-invalid');
-  //   disable_closest_button(input, disabled = true);
-  // }
+  const ipPattern = /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}$/;
+  if (ipPattern.test(input.value)) {
+    input.classList.remove('is-invalid');
+    disable_closest_button(input, disabled = false);
+  } else {
+    input.classList.add('is-invalid');
+    disable_closest_button(input, disabled = true);
+  }
 }
 
 const validation_functions = {
