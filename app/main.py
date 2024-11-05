@@ -35,17 +35,17 @@ async def read_root(request: Request):
     if not username and settings.testing_mode:
         username = settings.testing_user
     if not username:
-        return templates.TemplateResponse(
-            request=request, name="index.html", context={"username": username}
-        )
-    context = {
+        ctx = {
+                "username": username,
+              }
+        return templates.TemplateResponse(request=request, name="index.html", context=ctx)
+    ctx = {
             "username": username,
             "user_origin": zonemgr.user_zone_origin(username),
             "user_zone": zonemgr.get_user_zonefile(username),
-            }
-    return templates.TemplateResponse(
-        request=request, name="user.html", context=context
-    )
+            "testing_mode": settings.testing_mode,
+          }
+    return templates.TemplateResponse(request=request, name="user.html", context=ctx)
 
 
 @app.get('/zonefile', response_class=PlainTextResponse)

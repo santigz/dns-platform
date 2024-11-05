@@ -56,6 +56,7 @@ class ZoneManager(object):
             NamedManager.named_checkconf()
             NamedManager.named_checkzone(self.origin, MAIN_ZONE_FILE)
             NamedManager.run()
+            logger.info('Bind passed checks and is running.')
         except NamedCheckConfError as e:
             logger.error(f'ERROR in named-checkconf!!!!!!\n{e}')
             raise
