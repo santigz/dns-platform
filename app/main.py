@@ -13,7 +13,7 @@ from .dns_manager import ZoneManager, BadZoneFile
 
 class Settings(BaseSettings):
     root_domain: str = "example.com."
-    testing_mode: bool = True
+    testing_mode: bool = False
     testing_user: str = 'user'
 
 

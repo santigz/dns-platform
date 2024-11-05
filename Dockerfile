@@ -5,6 +5,9 @@ ENV TZ=UTC
 RUN apt-get update && \
     apt-get install -y bind9 dnsutils tzdata
 
+# TODO: avoid this
+# RUN rm /etc/bind/rndc.key
+
 RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata
 
