@@ -2,7 +2,7 @@ import logging
 import traceback
 
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic_settings import BaseSettings
@@ -31,7 +31,7 @@ TESTING = False
 
 @app.get('/', response_class=HTMLResponse)
 async def read_root(request: Request):
-    username = request.headers.get('REMOTE_USER')
+    username = request.headers.get('remote-user')
     if not username and settings.testing_mode:
         username = settings.testing_user
     if not username:
@@ -47,10 +47,20 @@ async def read_root(request: Request):
           }
     return templates.TemplateResponse(request=request, name="user.html", context=ctx)
 
+@app.get('/headers', response_class=PlainTextResponse)
+async def read_root(request: Request):
+    username = request.headers.get('remote-user')
+    if not username and settings.testing_mode:
+        username = settings.testing_user
+    if not username:
+        return JSONResponse(None, status_code=401)
+    # TODO: check user belongs to group dns_admin
+    headers = dict(request.headers)
+    return JSONResponse(content=headers)
 
 @app.get('/zonefile', response_class=PlainTextResponse)
 def read_user_zone(request: Request):
-    username = request.headers.get('REMOTE_USER')
+    username = request.headers.get('remote-user')
     if not username and settings.testing_mode:
         username = settings.testing_user
     if not username:
@@ -64,7 +74,7 @@ def read_user_zone(request: Request):
 
 @app.put('/zonefile')
 async def set_user_zone(request: Request):
-    username = request.headers.get('REMOTE_USER')
+    username = request.headers.get('remote-user')
     if not username and settings.testing_mode:
         username = settings.testing_user
     if not username:

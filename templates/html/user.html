@@ -15,7 +15,14 @@
   <div class="container-fluid text-bg-danger text-center fw-bold">LOCAL TEST MODE</div>
   {% endif -%}
   <div class="container-md">
-    <h1>Hello, {{username}}</h1>
+    <div class="row justify-content-between">
+      <div class="col">
+        <h1>Hello, {{username}}</h1>
+      </div>
+      <div class="col d-flex align-items-center justify-content-end">
+        <button type="button" class="btn btn-light" onclick="logout()">Log out</button>
+      </div>
+    </div>
 
     <div id="new-record-panel" class="mb-4">
       <h5 class="card-title">DNS zone {{user_origin}}</h5>

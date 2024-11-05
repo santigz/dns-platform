@@ -35,7 +35,7 @@ function ttl_html(ttl, zone_ttl) {
   * @param {string} [name="zone_ttl"] - Global $TTL of the zone, used when record's TTL is unknown.
   * @returns {string} HTML code for the table row.
   */
-function zone_table_row(type, name, value, ttl, zone_ttl, id, deletable=false) {
+function zone_table_row(type, name, value, ttl, zone_ttl, id, deletable = false) {
   type = type ?? '&nbsp;';
   name = name ?? '&nbsp;';
   value = value ?? '&nbsp;';
@@ -307,7 +307,7 @@ function create_record_a(button) {
   }
   rebuild_zone(button, new_zone)
     .catch(error => {
-        html_error = `
+      html_error = `
         <div class="row mt-1">
         <div class="col">
           <div class="alert alert-danger new-rr-update-msg" role="alert">
@@ -319,9 +319,9 @@ function create_record_a(button) {
         </div>
         </div>
         `;
-        div = document.createElement('div');
-        div.innerHTML = html_error;
-        button.parentElement.parentElement.insertAdjacentElement("afterend", div.firstElementChild);
+      div = document.createElement('div');
+      div.innerHTML = html_error;
+      button.parentElement.parentElement.insertAdjacentElement("afterend", div.firstElementChild);
     })
 }
 
@@ -417,4 +417,8 @@ function delete_rr(button) {
   rebuild_zone(button, new_zone).then(_ => {
     // window.location.reload(true);
   });
+}
+
+function logout() {
+  window.location.href = 'https://auth.infor.tiernogalvan.es/logout?rd=https://dns.infor.tiernogalvan.es';
 }
