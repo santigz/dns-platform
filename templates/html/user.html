@@ -35,7 +35,8 @@
         </li>
       </ul>
       <div class="tab-content mt-3">
-        <div class="tab-pane table-responsive fade active show" id="table-view" role="tabpanel" aria-labelledby="table-tab">
+        <div class="tab-pane table-responsive fade active show" id="table-view" role="tabpanel"
+          aria-labelledby="table-tab">
 
           <table class="table" id="zone-table">
             <thead>
@@ -77,8 +78,8 @@
         <li class="nav-item" role="presentation"><button class="nav-link" id="txt-tab" data-bs-toggle="tab"
             data-bs-target="#txt-record" type="button" role="tab" aria-selected="false" tabindex="-1">TXT</button>
         </li>
-        <!-- <li class="nav-item" role="presentation"><button class="nav-link" id="ns-tab" data-bs-toggle="tab" -->
-        <!--     data-bs-target="#ns-record" type="button" role="tab" aria-selected="false" tabindex="-1">NS</button></li> -->
+        <li class="nav-item" role="presentation"><button class="nav-link" id="ns-tab" data-bs-toggle="tab"
+            data-bs-target="#ns-record" type="button" role="tab" aria-selected="false" tabindex="-1">NS</button></li>
         <!-- <li class="nav-item" role="presentation"><button class="nav-link" id="srv-tab" data-bs-toggle="tab" -->
         <!--     data-bs-target="#srv-record" type="button" role="tab" aria-selected="false" tabindex="-1">SRV</button> -->
         <!-- </li> -->
@@ -97,9 +98,6 @@
                     <label for="a-name" class="form-label">Hostname</label>
                     <input type="text" class="form-control hostname-validation" id="a-name" preview="true" value=""
                       required="" placeholder="Enter @ or hostname">
-                    <!-- <div class="invalid-feedback"> -->
-                    <!--   Must be filled in. -->
-                    <!-- </div> -->
                     <small class="form-text"><span id="a-name-preview">&nbsp;</span></small>
                   </div>
                 </div>
@@ -117,9 +115,7 @@
                     <label for="a-ttl" class="form-label">TTL</label>
                     <input type="number" class="form-control ttl-validation" id="a-ttl" placeholder="(default)"
                       required="" min="0">
-                    <div class="invalid-feedback">
-                      Must be an integer greater than 60.
-                    </div>
+                    <div class="invalid-feedback">Must be an integer greater than 60.</div>
                   </div>
                 </div>
               </div>
@@ -134,33 +130,36 @@
         </div>
 
         <div class="tab-pane fade show" id="aaaa-record" role="tabpanel" aria-labelledby="aaaa-tab">
-          <form id="aaaa-record-form" autocomplete="off">
+          <form id="aaaa-record-form needs-validation" novalidate autocomplete="off">
             <div class="container">
               <div class="row align-items-start">
-                <div class="col">
+                <div class="col-sm-6 col-lg-5">
                   <div class="mb-3">
                     <label for="aaaa-name" class="form-label">Hostname</label>
-                    <input type="text" class="form-control hostname-validation" id="aaaa-name" preview="true" value="" required=""
-                      placeholder="Enter @ or hostname">
+                    <input type="text" class="form-control hostname-validation" id="aaaa-name" preview="true" value=""
+                      required="" placeholder="Enter @ or hostname">
                     <small class="form-text"><span id="aaaa-name-preview">&nbsp;</span></small>
                   </div>
                 </div>
-                <div class="col">
+                <div class="col-sm-6 col-lg-3">
                   <div class="mb-3">
                     <label for="aaaa-ip" class="form-label">IP Address</label>
                     <input type="text" class="form-control aaaa-validation" id="aaaa-ip" value="" required="">
                   </div>
                 </div>
-                <div class="col-2">
+                <div class="col-6 col-md-3 col-lg-2">
                   <div class="mb-3">
                     <label for="aaaa-ttl" class="form-label">TTL</label>
-                    <input type="number" class="form-control ttl-validation" id="aaaa-ttl" value="60" required="" min="0">
+                    <input type="number" class="form-control ttl-validation" id="aaaa-ttl" placeholder="(default)"
+                      required="" min="0">
+                    <div class="invalid-feedback">Must be an integer greater than 60.</div>
                   </div>
                 </div>
               </div>
               <div class="row">
-                <div class="col-2">
-                  <button type="button" class="btn btn-success" id="aaaa-button" onclick="create_record_aaaa(this)">Create Record</button>
+                <div class="col-3 col-lg-3">
+                  <button type="button" class="btn btn-success" id="aaaa-button"
+                    onclick="create_record_aaaa(this)">Create Record</button>
                 </div>
               </div>
             </div>
@@ -168,34 +167,38 @@
         </div>
 
         <div class="tab-pane fade show" id="cname-record" role="tabpanel" aria-labelledby="cname-tab">
-          <form id="a-record-form" autocomplete="off">
+          <form id="cname-record-form needs-validation" novalidate autocomplete="off">
             <div class="container">
               <div class="row align-items-start">
-                <div class="col">
+                <div class="col-sm-6 col-lg-5">
                   <div class="mb-3">
                     <label for="cname-name" class="form-label">Hostname</label>
-                    <input type="text" class="form-control" id="cname-name" value="" required=""
-                      placeholder="Enter hostname">
+                    <input type="text" class="form-control hostname-validation" id="cname-name" preview="true" value=""
+                      required="" placeholder="Enter @ or hostname">
+                    <small class="form-text"><span id="cname-name-preview">&nbsp;</span></small>
                   </div>
                 </div>
-                <div class="col">
+                <div class="col-sm-6 col-lg-3">
                   <div class="mb-3">
-                    <label for="cname-ip" class="form-label">Alias</label>
-                    <input type="text" class="form-control" id="cname-alias" preview="true" value="" required=""
-                      placeholder="Enter @ or hostname">
+                    <label for="cname-alias" class="form-label">Alias</label>
+                    <input type="text" class="form-control hostname-validation" id="cname-alias" preview="true" value=""
+                      required="" placeholder="Enter @ or hostname">
                     <small class="form-text"><span id="cname-alias-preview">&nbsp;</span></small>
                   </div>
                 </div>
-                <div class="col-2">
+                <div class="col-6 col-md-3 col-lg-2">
                   <div class="mb-3">
                     <label for="cname-ttl" class="form-label">TTL</label>
-                    <input type="number" class="form-control" id="cname-ttl" value="60" required="" min="0">
+                    <input type="number" class="form-control ttl-validation" id="cname-ttl" placeholder="(default)"
+                      required="" min="0">
+                    <div class="invalid-feedback">Must be an integer greater than 60.</div>
                   </div>
                 </div>
               </div>
               <div class="row">
-                <div class="col-2">
-                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
+                <div class="col-3 col-lg-3">
+                  <button type="button" class="btn btn-success" id="cname-button"
+                    onclick="create_record_cname(this)">Create Record</button>
                 </div>
               </div>
             </div>
@@ -203,39 +206,45 @@
         </div>
 
         <div class="tab-pane fade show" id="mx-record" role="tabpanel" aria-labelledby="mx-tab">
-          <form id="mx-record-form" autocomplete="off">
+          <form id="mx-record-form needs-validation" novalidate autocomplete="off">
             <div class="container">
               <div class="row align-items-start">
-                <div class="col">
+                <div class="col-sm-6 col-lg-5">
                   <div class="mb-3">
                     <label for="mx-name" class="form-label">Hostname</label>
-                    <input type="text" class="form-control" id="mx-name" preview="true" value="" required=""
-                      placeholder="Enter @ or hostname">
+                    <input type="text" class="form-control hostname-validation" id="mx-name" preview="true" value=""
+                      required="" placeholder="Enter @ or hostname">
                     <small class="form-text"><span id="mx-name-preview">&nbsp;</span></small>
                   </div>
                 </div>
-                <div class="col">
+                <div class="col-sm-6 col-lg-3">
                   <div class="mb-3">
-                    <label for="mx-ip" class="form-label">Mail server name</label>
-                    <input type="text" class="form-control" id="mx-ip" value="" required="">
+                    <label for="mx-host" class="form-label">Mail server name</label>
+                    <input type="text" class="form-control hostname-validation" id="mx-host" preview="true" value=""
+                      required="">
+                    <small class="form-text"><span id="mx-host-preview">&nbsp;</span></small>
                   </div>
                 </div>
-                <div class="col-2">
+                <div class="col-6 col-md-3 col-lg-2">
                   <div class="mb-3">
                     <label for="mx-priority" class="form-label">Priority</label>
-                    <input type="number" class="form-control" id="mx-priority" required="" min="0" placeholder="ej. 10">
+                    <input type="number" class="form-control priority-validation" id="mx-priority" required="" min="0"
+                      placeholder="ej. 10">
                   </div>
                 </div>
-                <div class="col-2">
+                <div class="col-6 col-md-3 col-lg-2">
                   <div class="mb-3">
                     <label for="mx-ttl" class="form-label">TTL</label>
-                    <input type="number" class="form-control" id="mx-ttl" value="60" required="" min="0">
+                    <input type="number" class="form-control ttl-validation" id="mx-ttl" placeholder="(default)"
+                      required="" min="0">
+                    <div class="invalid-feedback">Must be an integer greater than 60.</div>
                   </div>
                 </div>
               </div>
               <div class="row">
-                <div class="col-2">
-                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
+                <div class="col-3 col-lg-3">
+                  <button type="button" class="btn btn-success" id="mx-button" onclick="create_record_mx(this)">Create
+                    Record</button>
                 </div>
               </div>
             </div>
@@ -243,7 +252,7 @@
         </div>
 
         <div class="tab-pane fade show" id="txt-record" role="tabpanel" aria-labelledby="txt-tab">
-          <form id="txt-record-form" autocomplete="off">
+          <form id="txt-record-form needs-validation" novalidate autocomplete="off">
             <div class="container">
               <div class="row align-items-start">
                 <div class="col">
@@ -255,7 +264,7 @@
                 </div>
               </div>
               <div class="row align-items-start">
-                <div class="col-4">
+                <div class="col-sm-6 col-lg-5">
                   <div class="mb-3">
                     <label for="txt-name" class="form-label">Hostname</label>
                     <input type="text" class="form-control" id="txt-name" preview="true" value="" required=""
@@ -263,16 +272,57 @@
                     <small class="form-text"><span id="txt-name-preview">&nbsp;</span></small>
                   </div>
                 </div>
-                <div class="col-2">
+                <div class="col-6 col-md-3 col-lg-2">
                   <div class="mb-3">
                     <label for="txt-ttl" class="form-label">TTL</label>
-                    <input type="number" class="form-control" id="txt-ttl" value="60" required="" min="0">
+                    <input type="number" class="form-control ttl-validation" id="txt-ttl" placeholder="(default)"
+                      required="" min="0">
+                    <div class="invalid-feedback">Must be an integer greater than 60.</div>
                   </div>
                 </div>
               </div>
               <div class="row">
                 <div class="col-2">
-                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
+                  <button type="button" class="btn btn-success" id="aaaa-button" onclick="create_record_txt(this)">Create Record</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane fade show" id="ns-record" role="tabpanel" aria-labelledby="ns-tab">
+          <form id="ns-record-form needs-validation" novalidate autocomplete="off">
+            <div class="container">
+              <div class="row align-items-start">
+                <div class="col-sm-6 col-lg-5">
+                  <div class="mb-3">
+                    <label for="ns-name" class="form-label">Hostname</label>
+                    <input type="text" class="form-control hostname-validation" id="ns-name" preview="true" value=""
+                      required="" placeholder="Enter @ or hostname">
+                    <small class="form-text"><span id="ns-name-preview">&nbsp;</span></small>
+                  </div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                  <div class="mb-3">
+                    <label for="ns-nameserver" class="form-label">Nameserver</label>
+                    <input type="text" class="form-control nameserver-validation" id="ns-nameserver" preview="true" value=""
+                      required="" placeholder="Enter nameserver">
+                    <small class="form-text"><span id="ns-nameserver-preview">&nbsp;</span></small>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-2">
+                  <div class="mb-3">
+                    <label for="ns-ttl" class="form-label">TTL</label>
+                    <input type="number" class="form-control ttl-validation" id="ns-ttl" placeholder="(default)"
+                      required="" min="0">
+                    <div class="invalid-feedback">Must be an integer greater than 60.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-3 col-lg-3">
+                  <button type="button" class="btn btn-success" id="ns-button"
+                    onclick="create_record_ns(this)">Create Record</button>
                 </div>
               </div>
             </div>

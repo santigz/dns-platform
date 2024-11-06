@@ -5,7 +5,7 @@
 var user_origin;
 
 /**
-  * @type {string} Stores the zone data in json format following github.com/elgs/dns-zonefile
+* @type {string} Stores the zone data in json format following https://github.com/elgs/dns-zonefile
   *                Obtained from the html code.
   */
 var zone;
@@ -34,7 +34,7 @@ function ttl_html(ttl, zone_ttl) {
   * @param {string} [name="zone_ttl"] - Global $TTL of the zone, used when record's TTL is unknown.
   * @returns {string} HTML code for the table row.
   */
-function zone_table_row(type, name, value, ttl, zone_ttl, id, deletable = false) {
+function zone_table_row(type, name, value, ttl, zone_ttl, id, deletable = true) {
   type = type ?? '&nbsp;';
   name = name ?? '&nbsp;';
   if (name != '@') {
@@ -348,6 +348,43 @@ function create_record_aaaa(button) {
   create_record_generic(button, 'aaaa', rr);
 }
 
+function create_record_cname(button) {
+  const rr = {
+    'name': toASCII(document.getElementById("cname-name").value),
+    'alias': document.getElementById("cname-alias").value,
+    'ttl': document.getElementById("cname-ttl").value,
+  }
+  create_record_generic(button, 'cname', rr);
+}
+
+function create_record_mx(button) {
+  const rr = {
+    'name': toASCII(document.getElementById("mx-name").value),
+    'host': document.getElementById("mx-host").value,
+    'preference': document.getElementById("mx-priority").value,
+    'ttl': document.getElementById("mx-ttl").value,
+  }
+  create_record_generic(button, 'mx', rr);
+}
+
+function create_record_txt(button) {
+  const rr = {
+    'name': toASCII(document.getElementById("txt-name").value),
+    'value': toASCII(document.getElementById("txt-value").value),
+    'ttl': document.getElementById("txt-ttl").value,
+  }
+  create_record_generic(button, 'txt', rr);
+}
+
+function create_record_ns(button) {
+  const rr = {
+    'name': toASCII(document.getElementById("ns-name").value),
+    'host': document.getElementById("ns-nameserver").value,
+    'ttl': document.getElementById("ns-ttl").value,
+  }
+  create_record_generic(button, 'ns', rr);
+}
+
 
 function create_record_generic(button, type, rr_dict) {
   if (!zone) { return; }
@@ -416,14 +453,7 @@ function check_button(button) {
 }
 
 function validate_hostname(input) {
-  var valid = true;
-  if (!input.value) {
-    valid = false;
-  }
-  if (input.value.includes(' ')) {
-    valid = false
-  }
-  if (valid) {
+  if (input.value && !input.value.includes(' ')) {
     input.classList.remove('is-invalid');
   } else {
     input.classList.add('is-invalid');
@@ -482,11 +512,31 @@ function validate_aaaa(input) {
   evaluate_form_button(input);
 }
 
+function validate_priority(input) {
+  if (input.value) {
+    input.classList.remove('is-invalid');
+  } else {
+    input.classList.add('is-invalid');
+  }
+  evaluate_form_button(input);
+}
+
+function validate_nameserver(input) {
+  if (input.value && !input.value.includes(' ') && !input.value.includes('@')) {
+    input.classList.remove('is-invalid');
+  } else {
+    input.classList.add('is-invalid');
+  }
+  evaluate_form_button(input);
+}
+
 const validation_functions = {
   'hostname-validation': validate_hostname,
   'a-validation': validate_a,
   'aaaa-validation': validate_aaaa,
   'ttl-validation': validate_ttl,
+  'priority-validation': validate_priority,
+  'nameserver-validation': validate_nameserver,
 }
 
 function validate_input(input) {
