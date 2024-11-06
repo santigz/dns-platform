@@ -1,4 +1,3 @@
-
 /**
   * @type {string} Stores the origin name for this user's zone.
   *                Obtained from the html code.
@@ -38,6 +37,9 @@ function ttl_html(ttl, zone_ttl) {
 function zone_table_row(type, name, value, ttl, zone_ttl, id, deletable = false) {
   type = type ?? '&nbsp;';
   name = name ?? '&nbsp;';
+  if (name != '@') {
+    name = toUnicode(name);
+  }
   value = value ?? '&nbsp;';
   ttl_show = ttl_html(ttl, zone_ttl)
   html = `
@@ -260,7 +262,7 @@ document.querySelectorAll('input[preview$="true"]').forEach(input => {
   input.addEventListener('input', (e) => {
     validate_hostname(input);
     const preview = document.getElementById(`${e.target.id}-preview`);
-    const name = to_punycode(e.target.value);
+    const name = toASCII(e.target.value);
     if (!name) {
       preview.textContent = '\xa0';
       return;
@@ -283,7 +285,7 @@ function create_record_a(button) {
   if (!valid) {
     return;
   }
-  const name = to_punycode(document.getElementById("a-name").value);
+  const name = toASCII(document.getElementById("a-name").value);
   if (!name) {
     return;
   }
@@ -329,10 +331,14 @@ function create_record_a(button) {
 }
 
 
-function disable_closest_button(input, disabled) {
+function evaluate_form_button(input) {
   const form = input.closest('form');
   const button = form.querySelector('button');
-  button.disabled = disabled;
+  if (form.querySelector('.is-invalid')) {
+    button.disabled = true;
+  } else {
+    button.disabled = false;
+  }
 }
 
 function validate_record_a(button) {
@@ -363,33 +369,32 @@ function validate_hostname(input) {
   } else {
     input.classList.add('is-invalid');
   }
+  evaluate_form_button(input);
 }
 
 function validate_ttl(input) {
   if (!input.value) {
     input.classList.remove('is-invalid');
-    disable_closest_button(input, disabled = false);
+    evaluate_form_button(input);
     return;
   }
   const number = parseInt(input.value);
   if (isNaN(number) || number < 60) {
     input.classList.add('is-invalid');
-    disable_closest_button(input, disabled = true);
   } else {
     input.classList.remove('is-invalid');
-    disable_closest_button(input, disabled = false);
   }
+  evaluate_form_button(input);
 }
 
 function validate_a(input) {
   const ipPattern = /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}$/;
   if (ipPattern.test(input.value)) {
     input.classList.remove('is-invalid');
-    disable_closest_button(input, disabled = false);
   } else {
     input.classList.add('is-invalid');
-    disable_closest_button(input, disabled = true);
   }
+  evaluate_form_button(input);
 }
 
 const validation_functions = {
@@ -434,19 +439,19 @@ function domain_sanitizer(domain) {
   return domain.replace(/\s+/g, '');
 }
 
-function to_unicode(domain) {
-  return new URL(`http://${domain}`).hostname;
-}
+// function to_unicode(domain) {
+//   return new URL(`http://${domain}`).hostname;
+// }
 
-function to_punycode(domain) {
-  try {
-    return domain.normalize("NFC").split('.').map(part =>
-      part.startsWith('xn--') ? part : new URL(`http://${part}.com`).hostname.split('.')[0]
-    ).join('.');
-  } catch (error) {
-    return '';
-  }
-}
+// function to_punycode(domain) {
+//   try {
+//     return domain.normalize("NFC").split('.').map(part =>
+//       part.startsWith('xn--') ? part : new URL(`http://${part}.com`).hostname.split('.')[0]
+//     ).join('.');
+//   } catch (error) {
+//     return '';
+//   }
+// }
 
 function logout() {
   window.location.href = 'https://auth.infor.tiernogalvan.es/logout?rd=https://dns.infor.tiernogalvan.es';
