@@ -262,13 +262,13 @@ document.querySelectorAll('input[preview$="true"]').forEach(input => {
   input.addEventListener('input', (e) => {
     validate_hostname(input);
     const preview = document.getElementById(`${e.target.id}-preview`);
+    if (e.target.value == '@') {
+      preview.textContent = user_origin;
+      return;
+    }
     const name = toASCII(e.target.value);
     if (!name) {
       preview.textContent = '\xa0';
-      return;
-    }
-    if (name == '@') {
-      preview.textContent = user_origin;
       return;
     }
     if (name.slice(-1) == '.') {
@@ -279,36 +279,95 @@ document.querySelectorAll('input[preview$="true"]').forEach(input => {
   });
 });
 
+// function create_record_a(button) {
+//   if (!zone) { return; }
+//   const valid = validate_record_a(button);
+//   if (!valid) {
+//     return;
+//   }
+//   const name = toASCII(document.getElementById("a-name").value);
+//   if (!name) {
+//     return;
+//   }
+//   const ip = document.getElementById("a-ip").value;
+//   const ttl = document.getElementById("a-ttl").value;
+//   rr = {};
+//   if (name) {
+//     rr["name"] = name;
+//   }
+//   if (ip) {
+//     rr["ip"] = ip;
+//   }
+//   if (ttl) {
+//     rr["ttl"] = ttl;
+//   }
+//   if (Object.keys(rr).length == 0) {
+//     return;
+//   }
+//   new_zone = structuredClone(zone);
+//   if ('a' in new_zone) {
+//     new_zone['a'].push(rr);
+//   } else {
+//     new_zone['a'] = [rr];
+//   }
+//   rebuild_zone(button, new_zone)
+//     .catch(error => {
+//       html_error = `
+//         <div class="row mt-1">
+//         <div class="col">
+//           <div class="alert alert-danger new-rr-update-msg" role="alert">
+//             <h5 class="alert-heading">Error adding the record:</h5>
+//             <p><pre>${error.type}</pre></p>
+//             <hr>
+//             <p class="mb-0"><pre>${error.message}</pre></p>
+//           </div>
+//         </div>
+//         </div>
+//         `;
+//       div = document.createElement('div');
+//       div.innerHTML = html_error;
+//       button.parentElement.parentElement.insertAdjacentElement("afterend", div.firstElementChild);
+//     })
+// }
+
 function create_record_a(button) {
+  const rr = {
+    'name': toASCII(document.getElementById("a-name").value),
+    'ip': document.getElementById("a-ip").value,
+    'ttl': document.getElementById("a-ttl").value,
+  }
+  create_record_generic(button, 'a', rr);
+}
+
+function create_record_aaaa(button) {
+  const rr = {
+    'name': toASCII(document.getElementById("aaaa-name").value),
+    'ip': document.getElementById("aaaa-ip").value,
+    'ttl': document.getElementById("aaaa-ttl").value,
+  }
+  create_record_generic(button, 'aaaa', rr);
+}
+
+
+function create_record_generic(button, type, rr_dict) {
   if (!zone) { return; }
-  const valid = validate_record_a(button);
-  if (!valid) {
+  if (!check_button(button)) {
     return;
   }
-  const name = toASCII(document.getElementById("a-name").value);
-  if (!name) {
-    return;
-  }
-  const ip = document.getElementById("a-ip").value;
-  const ttl = document.getElementById("a-ttl").value;
   rr = {};
-  if (name) {
-    rr["name"] = name;
-  }
-  if (ip) {
-    rr["ip"] = ip;
-  }
-  if (ttl) {
-    rr["ttl"] = ttl;
+  for (let key in rr_dict) {
+    if (rr_dict[key]) {
+      rr[key] = rr_dict[key];
+    }
   }
   if (Object.keys(rr).length == 0) {
     return;
   }
   new_zone = structuredClone(zone);
-  if ('a' in new_zone) {
-    new_zone['a'].push(rr);
+  if (type in new_zone) {
+    new_zone[type].push(rr);
   } else {
-    new_zone['a'] = [rr];
+    new_zone[type] = [rr];
   }
   rebuild_zone(button, new_zone)
     .catch(error => {
@@ -341,7 +400,7 @@ function evaluate_form_button(input) {
   }
 }
 
-function validate_record_a(button) {
+function check_button(button) {
   const form = button.closest('form');
   form.querySelectorAll('input').forEach(input => {
     validate_input(input);
@@ -387,9 +446,35 @@ function validate_ttl(input) {
   evaluate_form_button(input);
 }
 
+function validate_ipv4(ip) {
+  // From https://github.com/Karbashevskyi/thiis/blob/main/src/regexp.ts
+  const ipv4Regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  if (ipv4Regex.test(ip)) {
+    return ip.split('.').every(part => parseInt(part) <= 255);
+  }
+  return false;
+}
+
+function validate_ipv6(ip) {
+  // From https://github.com/Karbashevskyi/thiis/blob/main/src/regexp.ts
+  const ipv6Regex = /^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?$/;
+  if (ipv6Regex.test(ip)) {
+    return ip.split(':').every(part => part.length <= 4);
+  }
+  return false;
+}
+
 function validate_a(input) {
-  const ipPattern = /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}$/;
-  if (ipPattern.test(input.value)) {
+  if (validate_ipv4(input.value)) {
+    input.classList.remove('is-invalid');
+  } else {
+    input.classList.add('is-invalid');
+  }
+  evaluate_form_button(input);
+}
+
+function validate_aaaa(input) {
+  if (validate_ipv6(input.value)) {
     input.classList.remove('is-invalid');
   } else {
     input.classList.add('is-invalid');
@@ -400,6 +485,7 @@ function validate_a(input) {
 const validation_functions = {
   'hostname-validation': validate_hostname,
   'a-validation': validate_a,
+  'aaaa-validation': validate_aaaa,
   'ttl-validation': validate_ttl,
 }
 

@@ -67,7 +67,8 @@ class NamedManager(object):
 
     @classmethod
     def named_checkzone(cls, origin, zone_file) -> str:
-        proc = subprocess.run(['named-checkzone', origin, zone_file], 
+        # named-checkzone -k fail ensures zone names are strictly checked
+        proc = subprocess.run(['named-checkzone', '-k', 'fail', origin, zone_file], 
                               timeout=5,
                               stdout=subprocess.PIPE, 
                               stderr=subprocess.STDOUT,

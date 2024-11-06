@@ -140,7 +140,7 @@
                 <div class="col">
                   <div class="mb-3">
                     <label for="aaaa-name" class="form-label">Hostname</label>
-                    <input type="text" class="form-control" id="aaaa-name" preview="true" value="" required=""
+                    <input type="text" class="form-control hostname-validation" id="aaaa-name" preview="true" value="" required=""
                       placeholder="Enter @ or hostname">
                     <small class="form-text"><span id="aaaa-name-preview">&nbsp;</span></small>
                   </div>
@@ -148,19 +148,19 @@
                 <div class="col">
                   <div class="mb-3">
                     <label for="aaaa-ip" class="form-label">IP Address</label>
-                    <input type="text" class="form-control" id="aaaa-ip" value="" required="">
+                    <input type="text" class="form-control aaaa-validation" id="aaaa-ip" value="" required="">
                   </div>
                 </div>
                 <div class="col-2">
                   <div class="mb-3">
                     <label for="aaaa-ttl" class="form-label">TTL</label>
-                    <input type="number" class="form-control" id="aaaa-ttl" value="60" required="" min="0">
+                    <input type="number" class="form-control ttl-validation" id="aaaa-ttl" value="60" required="" min="0">
                   </div>
                 </div>
               </div>
               <div class="row">
                 <div class="col-2">
-                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
+                  <button type="button" class="btn btn-success" id="aaaa-button" onclick="create_record_aaaa(this)">Create Record</button>
                 </div>
               </div>
             </div>
