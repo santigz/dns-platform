@@ -1,26 +1,31 @@
-import shutil
-import hmac
-import hashlib
-import secrets
 import base64
 import dns.exception
 import dns.resolver
 import dns.zone
+import hashlib
+import hmac
 import logging
 import os
 import requests
+import secrets
+import shutil
 import traceback
 
-from pathlib import Path
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
 
 from .named_manager import NamedManager, NamedCheckConfError, NamedCheckZoneError, NamedReloadError
 
+# Bind globals
 BIND_DIR = '/etc/bind/'
 MAIN_ZONE_FILE = '/etc/bind/main-zone'
 CUSTOM_RRS_FILE = '/etc/bind/custom-records'
-USER_ZONES_DIR = '/etc/bind/user-zones'
-TEMPLATES_DIR = '/code/templates/bind'
+USER_ZONES_DIR = '/etc/bind/user-zones/'
+BACKUPS_DIR = '/etc/bind/backups/'
+
+# Templates globals
+TEMPLATES_DIR = '/code/templates/bind/'
 ZONEFILE_TEMPLATE = 'main-zone.j2'
 NAMED_CONF_TEMPLATE = 'named.conf.j2'
 NAMED_CONF_LOCAL_TEMPLATE = 'named.conf.local.j2'
@@ -51,18 +56,28 @@ class ZoneManager(object):
         logger.info(f'ORIGIN {self.origin}')
         self.jinja_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
         Path(USER_ZONES_DIR).mkdir(exist_ok=True)
-        self.full_reset()
+        bind_failed = False
         try:
-            NamedManager.named_checkconf()
-            NamedManager.named_checkzone(self.origin, MAIN_ZONE_FILE)
-            NamedManager.run()
+            NamedManager.check_and_run(self.origin, MAIN_ZONE_FILE)
             logger.info('Bind passed checks and is running.')
         except NamedCheckConfError as e:
+            bind_failed = True
             logger.error(f'ERROR in named-checkconf!!!!!!\n{e}')
-            raise
         except NamedCheckZoneError as e:
+            bind_failed = True
+            contents = Path(MAIN_ZONE_FILE).read_text()
+            logger.error(f'Main zone file:\n{contents}')
             logger.error(f'ERROR in named-checkzone in main zone!!!!!!\n{e}')
-            raise
+        if bind_failed:
+            try:
+                logger.info('Doing a backup and full Bind reset. All previous config is removed.')
+                self.backup()
+                self.full_reset()
+                logger.info('Trying to start bind after reset.')
+                NamedManager.check_and_run(self.origin, MAIN_ZONE_FILE)
+            except Exception:
+                logger.error(f'Failed resetting. Can not continue Bind.')
+                raise
 
     @property
     def public_ip(self) -> str | None:
@@ -260,3 +275,14 @@ class ZoneManager(object):
         self.write_template(NAMED_CONF_RNDC_TEMPLATE, BIND_DIR, data)
         self.write_template(NAMED_CONF_TEMPLATE, BIND_DIR, {})
 
+    def backup(self):
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        bkp_dir = Path(BACKUPS_DIR) / timestamp
+        try:
+            bkp_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(MAIN_ZONE_FILE, bkp_dir)
+            shutil.copy2(CUSTOM_RRS_FILE, bkp_dir)
+            shutil.copytree(USER_ZONES_DIR, bkp_dir)
+            shutil.copy2('/etc/bind/named.conf.local', bkp_dir)
+        except Exception:
+            logger.error(f'Failed backup {bkp_dir}.')

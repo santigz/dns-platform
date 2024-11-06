@@ -15,6 +15,12 @@ class NamedReloadError(Exception):
 class NamedManager(object):
 
     @classmethod
+    def check_and_run(cls, origin, zone_file) -> None:
+        NamedManager.named_checkconf()
+        NamedManager.named_checkzone(origin, zone_file)
+        NamedManager.run()
+
+    @classmethod
     def run(cls) -> None:
         if not NamedManager.named_pid():
             subprocess.run(['named'], timeout=5)
