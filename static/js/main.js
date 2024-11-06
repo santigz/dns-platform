@@ -260,7 +260,7 @@ document.querySelectorAll('input[preview$="true"]').forEach(input => {
   input.addEventListener('input', (e) => {
     validate_hostname(input);
     const preview = document.getElementById(`${e.target.id}-preview`);
-    const name = e.target.value;
+    const name = to_punycode(e.target.value);
     if (!name) {
       preview.textContent = '\xa0';
       return;
@@ -270,10 +270,10 @@ document.querySelectorAll('input[preview$="true"]').forEach(input => {
       return;
     }
     if (name.slice(-1) == '.') {
-      preview.textContent = e.target.value;
+      preview.textContent = name;
       return;
     }
-    preview.textContent = e.target.value + '.' + user_origin;
+    preview.textContent = name + '.' + user_origin;
   });
 });
 
@@ -283,7 +283,10 @@ function create_record_a(button) {
   if (!valid) {
     return;
   }
-  const name = document.getElementById("a-name").value;
+  const name = to_punycode(document.getElementById("a-name").value);
+  if (!name) {
+    return;
+  }
   const ip = document.getElementById("a-ip").value;
   const ttl = document.getElementById("a-ttl").value;
   rr = {};
@@ -348,7 +351,14 @@ function validate_record_a(button) {
 }
 
 function validate_hostname(input) {
-  if (input.value) {
+  var valid = true;
+  if (!input.value) {
+    valid = false;
+  }
+  if (input.value.includes(' ')) {
+    valid = false
+  }
+  if (valid) {
     input.classList.remove('is-invalid');
   } else {
     input.classList.add('is-invalid');
@@ -417,6 +427,25 @@ function delete_rr(button) {
   rebuild_zone(button, new_zone).then(_ => {
     // window.location.reload(true);
   });
+}
+
+function domain_sanitizer(domain) {
+  // remove spaces
+  return domain.replace(/\s+/g, '');
+}
+
+function to_unicode(domain) {
+  return new URL(`http://${domain}`).hostname;
+}
+
+function to_punycode(domain) {
+  try {
+    return domain.normalize("NFC").split('.').map(part =>
+      part.startsWith('xn--') ? part : new URL(`http://${part}.com`).hostname.split('.')[0]
+    ).join('.');
+  } catch (error) {
+    return '';
+  }
 }
 
 function logout() {
