@@ -14,18 +14,19 @@
   {% if testing_mode -%}
   <div class="container-fluid text-bg-danger text-center fw-bold">LOCAL TEST MODE</div>
   {% endif -%}
-  <div class="container-md">
-    <div class="row justify-content-between">
+  <div class="container-lg">
+    <div class="row justify-content-between mt-2 mb-4">
       <div class="col">
-        <h1>Hello, {{username}}</h1>
+        <h1>{{user_origin}}</h1>
       </div>
       <div class="col d-flex align-items-center justify-content-end">
+        <span class="mx-3">{{username}}</span>
         <button type="button" class="btn btn-light" onclick="logout()">Log out</button>
       </div>
     </div>
 
     <div id="new-record-panel" class="mb-4">
-      <h5 class="card-title">DNS zone {{user_origin}}</h5>
+      <h5 class="card-title">DNS zone</h5>
       <ul class="nav nav-underline" id="recordTabs" role="tablist">
         <li class="nav-item" role="presentation"><button class="nav-link active" id="table-tab" data-bs-toggle="tab"
             data-bs-target="#table-view" type="button" role="tab" aria-selected="true">Table</button></li>
@@ -34,16 +35,16 @@
         </li>
       </ul>
       <div class="tab-content mt-3">
-        <div class="tab-pane fade active show" id="table-view" role="tabpanel" aria-labelledby="table-tab">
+        <div class="tab-pane table-responsive fade active show" id="table-view" role="tabpanel" aria-labelledby="table-tab">
 
           <table class="table" id="zone-table">
             <thead>
               <tr>
                 <th scope="col">Type</th>
                 <th scope="col">Hostname</th>
-                <th scope="col">Value</th>
-                <th scope="col">TTL (seconds)</th>
-                <th scope="col" class="text-end">Actions</th>
+                <th scope="col" style="min-width: 120px;">Value</th>
+                <th scope="col" style="min-width: 100px;">TTL (seconds)</th>
+                <th scope="col" class="text-end" style="min-width: 130px;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -91,7 +92,7 @@
           <form id="a-record-form needs-validation" novalidate autocomplete="off">
             <div class="container">
               <div class="row align-items-start">
-                <div class="col-6 col-lg-5">
+                <div class="col-sm-6 col-lg-5">
                   <div class="mb-3">
                     <label for="a-name" class="form-label">Hostname</label>
                     <input type="text" class="form-control hostname-validation" id="a-name" preview="true" value=""
@@ -102,7 +103,7 @@
                     <small class="form-text"><span id="a-name-preview">&nbsp;</span></small>
                   </div>
                 </div>
-                <div class="col-6 col-lg-5">
+                <div class="col-sm-6 col-lg-3">
                   <div class="mb-3">
                     <label for="a-ip" class="form-label">IP Address</label>
                     <input type="text" class="form-control a-validation" id="a-ip" value="" required="">
@@ -111,7 +112,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-3 col-lg-2">
+                <div class="col-6 col-md-3 col-lg-2">
                   <div class="mb-3">
                     <label for="a-ttl" class="form-label">TTL</label>
                     <input type="number" class="form-control ttl-validation" id="a-ttl" placeholder="(default)"
@@ -159,7 +160,7 @@
               </div>
               <div class="row">
                 <div class="col-2">
-                  <button type="button" class="btn btn-success" id="aaaa-button">Create Record</button>
+                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
                 </div>
               </div>
             </div>
@@ -194,7 +195,7 @@
               </div>
               <div class="row">
                 <div class="col-2">
-                  <button type="button" class="btn btn-success" id="cname-button">Create Record</button>
+                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
                 </div>
               </div>
             </div>
@@ -234,7 +235,7 @@
               </div>
               <div class="row">
                 <div class="col-2">
-                  <button type="button" class="btn btn-success" id="mx-button">Create Record</button>
+                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
                 </div>
               </div>
             </div>
@@ -271,7 +272,7 @@
               </div>
               <div class="row">
                 <div class="col-2">
-                  <button type="button" class="btn btn-success" id="txt-button">Create Record</button>
+                  <button type="button" class="btn btn-success" id="aaaa-button">Not implemented</button>
                 </div>
               </div>
             </div>
