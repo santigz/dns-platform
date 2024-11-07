@@ -45,7 +45,7 @@ function zone_table_row(type, name, value, ttl, zone_ttl, id, deletable = true) 
   html = `
           <tr>
               <th scope="row">${type}</th>
-              <td>${name}</td>
+              <td class="copy-fqdn"><span class="name">${name}</span><span class="copy-fqdn-hint text-primary">copy FQDN</span></td>
               <td>${value}</td>
               <td>${ttl_show}</td>
         `;
@@ -598,3 +598,41 @@ function domain_sanitizer(domain) {
 function logout() {
   window.location.href = 'https://auth.infor.tiernogalvan.es/logout?rd=https://dns.infor.tiernogalvan.es';
 }
+
+
+function fqdn(hostname) {
+  const origin = document.querySelector('meta[name="user-origin"]').content;
+  if (hostname == '@') {
+    return origin;
+  }
+  if (hostname.slice(-1) == '.') {
+    return hostname;
+  }
+  return hostname + '.' + origin;
+}
+
+/*
+ *
+ *
+ *
+ */
+
+function copy_fqdn(element) {
+  const textToCopy = fqdn(element.querySelector(".name").textContent);
+  navigator.clipboard.writeText(textToCopy)
+    .then(() => {
+      const copyHint = element.querySelector(".copy-fqdn-hint");
+      copyHint.textContent = "copied!";  // Change "copy" to "ok"
+      setTimeout(() => {             // Reset after 1.5 seconds
+        copyHint.textContent = "copy FQDN";
+      }, 1500);
+    })
+    .catch(err => console.error("Could not copy text: ", err));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Apply click event to each element with the class 'copy-to-clipboard'
+  document.querySelectorAll(".copy-fqdn").forEach(element => {
+    element.addEventListener("click", () => copy_fqdn(element));
+  });
+});

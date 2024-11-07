@@ -1,0 +1,10 @@
+.copy-fqdn-hint {
+  visibility: hidden;
+  margin-left: 8px;
+  /* color: #007bff; */
+  cursor: pointer;
+}
+
+.copy-fqdn:hover .copy-fqdn-hint {
+  visibility: visible;
+}
