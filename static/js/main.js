@@ -131,7 +131,13 @@ function update_zonefile(zone_text) {
         reject({ success: false, type: update_msg.detail.error, message: msg });
       })
       .catch(error => {
-        reject({ success: false, type: 'Network error', message: error });
+        msg = error + '\n Reloading page in 5 seconds...';
+        reject({ success: false, type: 'Network error', message: msg });
+        // Suele ser error de fin de sesión. Recargamos por si pide login.
+        // TODO: sólo recargar si el usuario ha perdido sesión. Me falla por problemas CORS que no consigo resolver.
+        setTimeout(() => {
+          window.location.reload();
+        }, 5000);
       });
   })
 }
