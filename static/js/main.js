@@ -370,7 +370,7 @@ function create_record_mx(button) {
 function create_record_txt(button) {
   const rr = {
     'name': toASCII(document.getElementById("txt-name").value),
-    'value': toASCII(document.getElementById("txt-value").value),
+    'txt': toASCII(document.getElementById("txt-value").value),
     'ttl': document.getElementById("txt-ttl").value,
   }
   create_record_generic(button, 'txt', rr);
