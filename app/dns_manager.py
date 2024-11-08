@@ -1,6 +1,5 @@
 import base64
 import ipaddress
-from datetime import datetime, timedelta
 import dns.exception
 import dns.resolver
 import dns.zone
@@ -12,6 +11,8 @@ import requests
 import secrets
 import shutil
 
+from datetime import datetime, timedelta
+from typing import Dict
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
@@ -311,11 +312,11 @@ class ZoneManager(object):
         except Exception:
             logger.error(f'Failed backup {bkp_dir}.')
 
-    def generate_token(self):
+    def generate_token(self) -> str:
         raw_token = secrets.token_hex(USER_TOKEN_LENGTH // 2)
         return '-'.join(raw_token[i:i+4] for i in range(0, len(raw_token), 4))
 
-    def load_user_tokens(self):
+    def load_user_tokens(self) -> Dict[str, str]:
         tokens = {}
         for f_name in Path(USER_TOKENS_DIR).iterdir():
             try:
@@ -325,18 +326,27 @@ class ZoneManager(object):
                 continue
         return tokens
 
-    def reset_user_token(self, username):
+    def reset_user_token(self, username: str) -> str:
         token = self.generate_token()
         token_file = Path(USER_TOKENS_DIR) / username
         token_file.write_text(token)
         return token
 
-    def get_user_token(self, username):
+    def get_user_token(self, username: str) -> str:
         tokens = self.load_user_tokens()
         if username in tokens:
             return tokens[username]
         else:
             return self.reset_user_token(username)
 
+    def delete_user_token(self, username) -> None:
+        token_file = Path(USER_TOKENS_DIR) / username
+        token_file.unlink(missing_ok=True)
 
+    def find_user_for_token(self, token: str) -> str|None:
+        tokens = self.load_user_tokens()
+        for user_name, user_token in tokens.items():
+            if user_token == token:
+                return user_name
+        return None
 
