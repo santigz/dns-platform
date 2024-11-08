@@ -164,7 +164,7 @@ function rebuild_zone(button, new_zone) {
     update_zonefile(new_zone_text)
       .then(result => {
         zone = new_zone;
-        build_zone_table();
+        rebuild_zone_table();
         const zone_file = document.getElementById("zone-file");
         zone_file.innerHTML = generate(zone);
         resolve();
@@ -189,7 +189,7 @@ function is_rr_deletable(type, rr, soa) {
 /**
   * Takes the current `zone` variable and rebuilds the zone table accordingly.
   */
-function build_zone_table() {
+function rebuild_zone_table() {
   // https://github.com/elgs/dns-zonefile
   if (!zone) { return; }
   var tbody = document.querySelector("#zone-table tbody");
@@ -258,7 +258,7 @@ function build_zone_table() {
 document.addEventListener('DOMContentLoaded', function() {
   user_origin = document.querySelector('meta[name="user-origin"]').content;
   zone = parse(document.getElementById('zone-file').textContent);
-  build_zone_table();
+  rebuild_zone_table();
   fix_ttl_placeholder();
   set_input_validations();
 });
@@ -636,3 +636,29 @@ document.addEventListener('DOMContentLoaded', function() {
     element.addEventListener("click", () => copy_fqdn(element));
   });
 });
+
+
+function reset_zone() {
+  fetch('/reset_zonefile', {
+    method: 'POST',
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed resetting the zone.');
+      }
+      return response.text();
+    })
+    .then(data => {
+      window.location.reload();
+      // document.querySelector('#zone-file').textContent = data;
+      // zone = parse(data);
+      // rebuild_zone_table();
+      // msg = document.querySelector('#reset-error-msg').closest('div');
+      // msg.classList.add('d-none');
+    })
+    .catch(error => {
+      msg = document.querySelector('#reset-error-msg').closest('div');
+      msg.innerHTML = '<p>Failed resetting the zone.</p>';
+      msg.classList.remove('d-none');
+    });
+}

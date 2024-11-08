@@ -93,3 +93,18 @@ async def set_user_zone(request: Request):
         # logger.error(traceback.print_exc())
         raise HTTPException(status_code=402, detail={'error': 'Internal error', 'message': str(e)})
 
+
+@app.post('/reset_zonefile', response_class=PlainTextResponse)
+def read_user_zone(request: Request):
+    username = request.headers.get('remote-user')
+    if not username and settings.testing_mode:
+        username = settings.testing_user
+    if not username:
+        return PlainTextResponse('', status_code=401)
+    try:
+        zonemgr.reset_user_zonefile(username)
+        zone = zonemgr.get_user_zonefile(username)
+        return zone
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

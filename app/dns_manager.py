@@ -1,4 +1,6 @@
 import base64
+import ipaddress
+from datetime import datetime, timedelta
 import dns.exception
 import dns.resolver
 import dns.zone
@@ -33,6 +35,8 @@ NAMED_CONF_RNDC_TEMPLATE = 'named.conf.rndc.j2'
 RNDC_CONF_TEMPLATE = 'rndc.conf.j2'
 USER_ZONE_TEMPLATE = 'user-zone.j2'
 
+PUBLIC_IP_REFRESH = 1 # Hours to refresh the public IP
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
@@ -46,10 +50,16 @@ class BadZoneFile(Exception):
 class ZoneFileCheckError(Exception):
     pass
 
+class ZoneCreationError(Exception):
+    pass
+
+
+
 class ZoneManager(object):
     
     def __init__(self, origin) -> None:
         self._public_ip = None
+        self._public_ip_last_date = datetime.now() - timedelta(hours=PUBLIC_IP_REFRESH*2)
         self.origin = origin
         if not self.origin.endswith('.'):
             self.origin += '.'
@@ -81,12 +91,13 @@ class ZoneManager(object):
 
     @property
     def public_ip(self) -> str | None:
-        if not self._public_ip:
+        delta = datetime.now() - self._public_ip_last_date
+        if not self._public_ip or delta > timedelta(hours=PUBLIC_IP_REFRESH):
             try:
                 self._public_ip = self.get_public_ip()
+                self._public_ip_last_date = datetime.now()
             except PublicIpNotFound as e:
-                self._public_ip = None
-                logger.error(f'Error finding public IP: {e}')
+                logger.error(f'Could not find public IP: {e}')
         return self._public_ip
 
     def full_reset(self) -> None:
@@ -191,20 +202,24 @@ class ZoneManager(object):
         except:
             return ''
 
-    def reset_zonefile(self, origin: str, zone_template: str, zonefile: str|Path, user_list: list[str] = []) -> None:
+    def reset_zonefile(self, origin: str, zone_template: str, zonefile: str|Path, user_list: list[str] = []) -> str:
         logger.info(f'Resetting zone {zonefile}')
         if not self.public_ip:
-            return
-        template = self.jinja_env.get_template(zone_template)
-        # TODO: get custom records only for main zone, not for all
-        data = {
-                'origin': origin,
-                'ns_ip': self.public_ip,
-                'user_list': user_list,
-                'custom_records': self.custom_records(),
-                }
-        zone = template.render(data)
-        Path(zonefile).write_text(zone)
+            raise ZoneCreationError('No public IP')
+        try:
+            template = self.jinja_env.get_template(zone_template)
+            # TODO: get custom records only for main zone, not for all
+            data = {
+                    'origin': origin,
+                    'ns_ip': self.public_ip,
+                    'user_list': user_list,
+                    'custom_records': self.custom_records(),
+                    }
+            zone = template.render(data)
+            Path(zonefile).write_text(zone)
+            return zone
+        except:
+            raise ZoneCreationError()
 
 
     def reset_bind_conf(self) -> None:
@@ -246,15 +261,22 @@ class ZoneManager(object):
         urls = [
             "https://ifconfig.me",
             "https://api.ipify.org",
+            "https://ipinfo.io/ip",
+            "https://icanhazip.com",
         ]
         for url in urls:
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
                     logger.info(f'Found public IP {response.text} from {url}')
-                    return response.text
-            except requests.RequestException as e:
-                raise PublicIpNotFound(e)
+                    ip = response.text.strip()
+                    ipaddress.IPv4Address(ip) # Throws if ip is invalid
+                    return ip
+            except:
+                logger.warning(f'Failed asking public IP to {url}')
+                continue
+        raise PublicIpNotFound()
+
 
 
     def write_template(self, template, dir, data):

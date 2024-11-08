@@ -18,7 +18,7 @@
   <div class="container-lg">
     <div class="row justify-content-between mt-2 mb-4">
       <div class="col">
-        <h1>{{user_origin}}</h1>
+        <h1 class="overflow-x-scroll">{{user_origin}}</h1>
       </div>
       <div class="col d-flex align-items-center justify-content-end">
         <span class="mx-3">{{username}}</span>
@@ -53,17 +53,34 @@
             <tbody>
             </tbody>
           </table>
-<!-- 
-<span class="copy-text" id="textToCopy" style="display: inline-block;">Hover over this text<span class="copy-hint" id="copyHint">copy</span> </span> 
--->
         </div>
         <div class="tab-pane fade show" id="file-view" role="tabpanel" aria-labelledby="file-tab">
-
           <pre><code id="zone-file">{{user_zone}}</code></pre>
-
         </div>
       </div>
     </div>
+
+  <div class="row">
+    <div class="col text-end">
+<button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#staticBackdrop">Reset zone</button>
+
+<div class="modal fade" id="staticBackdrop" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="staticBackdropLabel">Reset zone</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Delete all DNS records and start a new DNS zone.</p>
+        <button type="button" class="btn btn-danger" onclick="reset_zone()">Yes, delete everything and start again</button>
+      </div>
+      <div class="modal-footer bg-danger-subtle d-none">Error resetting the zone.<br><span id="reset-error-msg"></span></div>
+    </div>
+  </div>
+</div>
+    </div>
+  </div>
 
     <br>
     <div id="new-record-panel" class="mb-4">
