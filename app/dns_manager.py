@@ -11,7 +11,6 @@ import os
 import requests
 import secrets
 import shutil
-import traceback
 
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
@@ -24,6 +23,7 @@ BIND_DIR = '/etc/bind/'
 MAIN_ZONE_FILE = '/etc/bind/main-zone'
 CUSTOM_RRS_FILE = '/etc/bind/custom-records'
 USER_ZONES_DIR = '/etc/bind/user-zones/'
+USER_TOKENS_DIR = '/etc/bind/user-tokens/'
 BACKUPS_DIR = '/etc/bind/backups/'
 
 # Templates globals
@@ -36,6 +36,7 @@ RNDC_CONF_TEMPLATE = 'rndc.conf.j2'
 USER_ZONE_TEMPLATE = 'user-zone.j2'
 
 PUBLIC_IP_REFRESH = 1 # Hours to refresh the public IP
+USER_TOKEN_LENGTH = 16
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -66,6 +67,7 @@ class ZoneManager(object):
         logger.info(f'ORIGIN {self.origin}')
         self.jinja_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
         Path(USER_ZONES_DIR).mkdir(exist_ok=True)
+        Path(USER_TOKENS_DIR).mkdir(exist_ok=True)
         bind_failed = False
         try:
             NamedManager.check_and_run(self.origin, MAIN_ZONE_FILE)
@@ -308,3 +310,33 @@ class ZoneManager(object):
             shutil.copy2('/etc/bind/named.conf.local', bkp_dir)
         except Exception:
             logger.error(f'Failed backup {bkp_dir}.')
+
+    def generate_token(self):
+        raw_token = secrets.token_hex(USER_TOKEN_LENGTH // 2)
+        return '-'.join(raw_token[i:i+4] for i in range(0, len(raw_token), 4))
+
+    def load_user_tokens(self):
+        tokens = {}
+        for f_name in Path(USER_TOKENS_DIR).iterdir():
+            try:
+                if f_name.is_file():
+                    tokens[f_name]= f_name.read_text()
+            except:
+                continue
+        return tokens
+
+    def reset_user_token(self, username):
+        token = self.generate_token()
+        token_file = Path(USER_TOKENS_DIR) / username
+        token_file.write_text(token)
+        return token
+
+    def get_user_token(self, username):
+        tokens = self.load_user_tokens()
+        if username in tokens:
+            return tokens[username]
+        else:
+            return self.reset_user_token(username)
+
+
+
