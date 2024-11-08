@@ -16,12 +16,12 @@
   <div class="container-fluid text-bg-danger text-center fw-bold">LOCAL TEST MODE</div>
   {% endif -%}
   <div class="container-lg">
+
     <div class="row justify-content-between mt-2 mb-4">
       <div class="col">
         <h1 class="overflow-x-scroll">{{user_origin}}</h1>
       </div>
       <div class="col d-flex align-items-center justify-content-end">
-        <span class="mx-3">{{username}}</span>
         <button type="button" class="btn btn-light text-nowrap" onclick="logout()">Log out</button>
       </div>
     </div>
@@ -34,17 +34,18 @@
         <li class="nav-item" role="presentation"><button class="nav-link" id="file-tab" data-bs-toggle="tab"
             data-bs-target="#file-view" type="button" role="tab" aria-selected="false" tabindex="-1">File</button>
         </li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="actions-tab" data-bs-toggle="tab"
+            data-bs-target="#actions" type="button" role="tab" aria-selected="false" tabindex="-1">Actions</button>
+        </li>
       </ul>
       <div class="tab-content mt-3">
         <div class="tab-pane table-responsive fade active show" id="table-view" role="tabpanel"
           aria-labelledby="table-tab">
-
           <table class="table" id="zone-table">
             <thead>
               <tr>
                 <th scope="col">Type</th>
                 <th scope="col">Hostname</th>
-                  
                 <th scope="col" style="min-width: 120px;">Value</th>
                 <th scope="col" style="min-width: 100px;">TTL (seconds)</th>
                 <th scope="col" class="text-end" style="min-width: 130px;">Actions</th>
@@ -57,30 +58,34 @@
         <div class="tab-pane fade show" id="file-view" role="tabpanel" aria-labelledby="file-tab">
           <pre><code id="zone-file">{{user_zone}}</code></pre>
         </div>
+        <div class="tab-pane fade show" id="actions" role="tabpanel" aria-labelledby="actions-tab">
+          <div class="row">
+            <div class="col">
+              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                data-bs-target="#staticBackdrop">Reset zone</button>
+              <div class="modal fade" id="staticBackdrop" data-bs-keyboard="false" tabindex="-1"
+                aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5" id="staticBackdropLabel">Reset zone</h1>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Resetting the zone will delete all records and start a fresh DNS zone.</p>
+                      <button type="button" class="btn btn-danger" onclick="reset_zone()">Yes, delete everything and
+                        start again</button>
+                    </div>
+                    <div class="modal-footer bg-danger-subtle d-none">Error resetting the zone.<br><span
+                        id="reset-error-msg"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-  <div class="row">
-    <div class="col text-end">
-<button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#staticBackdrop">Reset zone</button>
-
-<div class="modal fade" id="staticBackdrop" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="staticBackdropLabel">Reset zone</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Delete all DNS records and start a new DNS zone.</p>
-        <button type="button" class="btn btn-danger" onclick="reset_zone()">Yes, delete everything and start again</button>
-      </div>
-      <div class="modal-footer bg-danger-subtle d-none">Error resetting the zone.<br><span id="reset-error-msg"></span></div>
-    </div>
-  </div>
-</div>
-    </div>
-  </div>
 
     <br>
     <div id="new-record-panel" class="mb-4">
@@ -304,7 +309,8 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <button type="button" class="btn btn-success" id="aaaa-button" onclick="create_record_txt(this)">Create Record</button>
+                  <button type="button" class="btn btn-success" id="aaaa-button"
+                    onclick="create_record_txt(this)">Create Record</button>
                 </div>
               </div>
             </div>
@@ -326,8 +332,8 @@
                 <div class="col-sm-6 col-lg-3">
                   <div class="mb-3">
                     <label for="ns-nameserver" class="form-label">Nameserver</label>
-                    <input type="text" class="form-control nameserver-validation" id="ns-nameserver" preview="true" value=""
-                      required="" placeholder="Enter nameserver">
+                    <input type="text" class="form-control nameserver-validation" id="ns-nameserver" preview="true"
+                      value="" required="" placeholder="Enter nameserver">
                     <small class="form-text"><span id="ns-nameserver-preview">&nbsp;</span></small>
                   </div>
                 </div>
@@ -342,8 +348,8 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <button type="button" class="btn btn-success" id="ns-button"
-                    onclick="create_record_ns(this)">Create Record</button>
+                  <button type="button" class="btn btn-success" id="ns-button" onclick="create_record_ns(this)">Create
+                    Record</button>
                 </div>
               </div>
             </div>
