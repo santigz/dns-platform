@@ -37,6 +37,9 @@
         <li class="nav-item" role="presentation"><button class="nav-link" id="actions-tab" data-bs-toggle="tab"
             data-bs-target="#actions" type="button" role="tab" aria-selected="false" tabindex="-1">Actions</button>
         </li>
+        <li class="nav-item" role="presentation"><button class="nav-link" id="dyndns-tab" data-bs-toggle="tab"
+            data-bs-target="#dyndns" type="button" role="tab" aria-selected="false" tabindex="-1">DynDNS</button>
+        </li>
       </ul>
       <div class="tab-content mt-3">
         <div class="tab-pane table-responsive fade active show" id="table-view" role="tabpanel"
@@ -83,6 +86,10 @@
               </div>
             </div>
           </div>
+        </div>
+        <div class="tab-pane fade show" id="dyndns" role="tabpanel" aria-labelledby="dyndns-tab">
+          <h3>Dynamic DNS</h3>
+          <p>Your token: <span id="user_token">{{user_token}}</span></p>
         </div>
       </div>
     </div>

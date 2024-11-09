@@ -316,26 +316,39 @@ class ZoneManager(object):
         raw_token = secrets.token_hex(USER_TOKEN_LENGTH // 2)
         return '-'.join(raw_token[i:i+4] for i in range(0, len(raw_token), 4))
 
+    # TODO: Are we loading user tokens too many times?
+    def generate_unique_token(self) -> str:
+        user_tokens = self.load_user_tokens()
+        user_token = None
+        while not user_token:
+            token = self.generate_token()
+            if token not in user_tokens.values():
+                user_token = token
+        return user_token
+
     def load_user_tokens(self) -> Dict[str, str]:
         tokens = {}
         for f_name in Path(USER_TOKENS_DIR).iterdir():
             try:
                 if f_name.is_file():
-                    tokens[f_name]= f_name.read_text()
+                    username = f_name.stem
+                    status = f_name.suffix.lstrip('.')
+                    if status != 'inactive':
+                        tokens[username]= f_name.read_text()
             except:
                 continue
         return tokens
 
     def reset_user_token(self, username: str) -> str:
-        token = self.generate_token()
+        token = self.generate_unique_token()
         token_file = Path(USER_TOKENS_DIR) / username
         token_file.write_text(token)
         return token
 
     def get_user_token(self, username: str) -> str:
-        tokens = self.load_user_tokens()
-        if username in tokens:
-            return tokens[username]
+        user_tokens = self.load_user_tokens()
+        if username in user_tokens:
+            return user_tokens[username]
         else:
             return self.reset_user_token(username)
 
@@ -344,9 +357,11 @@ class ZoneManager(object):
         token_file.unlink(missing_ok=True)
 
     def find_user_for_token(self, token: str) -> str|None:
-        tokens = self.load_user_tokens()
-        for user_name, user_token in tokens.items():
+        user_tokens = self.load_user_tokens()
+        for user_name, user_token in user_tokens.items():
             if user_token == token:
                 return user_name
         return None
 
+    def update_rr_a(self, username, ip, ttl=None):
+        pass
