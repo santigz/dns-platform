@@ -10,6 +10,7 @@ import os
 import requests
 import secrets
 import shutil
+import re
 
 from datetime import datetime, timedelta
 from typing import Dict
@@ -54,6 +55,11 @@ class ZoneFileCheckError(Exception):
 
 class ZoneCreationError(Exception):
     pass
+
+class RecordUpdateError(Exception):
+    pass
+
+
 
 
 
@@ -312,6 +318,32 @@ class ZoneManager(object):
         except Exception:
             logger.error(f'Failed backup {bkp_dir}.')
 
+    def zone_data_updating_record_a(self, username: str, hostname: str, ip: str, ttl=None) -> str:
+        logger.info(f'Updating record for user {username}: {hostname} {ip} {ttl}')
+        zonefile = Path(USER_ZONES_DIR) / username
+        if not zonefile.exists():
+            logger.error(f'Failed updating record: zone file does not exist for user {username}')
+            raise RecordUpdateError('Zone file does not exist')
+        zone_lines = zonefile.read_text().splitlines()
+        pattern = re.compile(rf'^{hostname}\s+(\d+\s+)?IN\s+A\s+\d+\.\d+\.\d+\.\d+')
+        record_found = False
+        updated_zone_data = []
+        ttl = f'{ttl}\t' if ttl else ''
+        for line in zone_lines:
+            if pattern.match(line):
+                updated_zone_data.append(f'{hostname}\t{ttl}IN\tA\t{ip}\n')
+                record_found = True
+            else:
+                updated_zone_data.append(line)
+        if not record_found:
+            updated_zone_data.append(f'{hostname}\t{ttl}IN\tA\t{ip}\n')
+            updated_zone_data.append('') # Ending newline mandatory for zone records
+        return '\n'.join(updated_zone_data)
+
+    def update_a_record(self, username: str, hostname: str, ip: str, ttl=None) -> None:
+        zone_data = self.zone_data_updating_record_a(username, hostname, ip, ttl)
+        self.set_user_zonefile(username, zone_data)
+
     def generate_token(self) -> str:
         raw_token = secrets.token_hex(USER_TOKEN_LENGTH // 2)
         return '-'.join(raw_token[i:i+4] for i in range(0, len(raw_token), 4))
@@ -345,6 +377,7 @@ class ZoneManager(object):
         token_file.write_text(token)
         return token
 
+    # TODO: implement token expiration
     def get_user_token(self, username: str) -> str:
         user_tokens = self.load_user_tokens()
         if username in user_tokens:

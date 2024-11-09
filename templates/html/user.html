@@ -88,8 +88,37 @@
           </div>
         </div>
         <div class="tab-pane fade show" id="dyndns" role="tabpanel" aria-labelledby="dyndns-tab">
-          <h3>Dynamic DNS</h3>
-          <p>Your token: <span id="user_token">{{user_token}}</span></p>
+          <div class="input-group mb-3">
+            <span class="input-group-text text-secondary"><strong>YOUR API TOKEN:</strong></span>
+            <input type="text" class="form-control bg-white font-monospace" placeholder="Username"
+              value="{{user_token}}" disabled="true" aria-label="Username" aria-describedby="basic-addon1">
+          </div>
+          <h5>Dynamic DNS API</h5>
+          <p>You can update a record of type A by making the next HTTP request:</p>
+          <div class="alert alert-light" role="alert">
+            <code>{{website_url}}/update/{HOSTNAME}<br>
+              {{website_url}}/update/{HOSTNAME}?ip={NEW_IP}</code>
+          </div>
+          <p class="ms-3">
+            <strong>HOSTNAME</strong> must be as it appears in yout zone file. If not present, it will be created.<br>
+            <strong>NEW_IP</strong> is optional. The external IP from the request will be used if omitted.
+          </p>
+          <h6>Token authorization</h6>
+          <p>Your API token must be provided in one of two ways:</p>
+          <ul>
+            <li>
+              As <code>X-API-Key</code> in the HTTP header:
+              <div class="alert alert-light" role="alert">
+                <code>curl -X POST -H 'X-Api-Key: YOUR_TOKEN' '{{website_url}}/update/{HOSTNAME}'</code>
+              </div>
+            </li>
+            <li>
+              As <code>api-key</code> in the HTTP request:
+              <div class="alert alert-light" role="alert">
+                <code>curl -X POST '{{website_url}}/update/{HOSTNAME}?api-key={YOUR_TOKEN}'</code>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

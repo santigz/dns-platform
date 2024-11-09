@@ -12,11 +12,12 @@ from fastapi import FastAPI, Query, Body, HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from .dns_manager import ZoneManager, BadZoneFile
+from .dns_manager import ZoneManager, BadZoneFile, RecordUpdateError
 
 
 class Settings(BaseSettings):
     root_domain: str = "example.com."
+    website_url: str = "http://localhost"
     testing_mode: bool = False
     testing_user: str = 'user'
 
@@ -27,7 +28,6 @@ logging.basicConfig(level=logging.DEBUG)
 settings = Settings()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
-rate_limiter = fastlimiter.RateLimiter(rate=5, capacity=5, seconds=60)
 
 # For user tokens
 api_key_query = APIKeyQuery(name="api-key", auto_error=False)
@@ -63,11 +63,12 @@ async def read_root(request: Request):
             "user_zone": zonemgr.get_user_zonefile(username),
             "testing_mode": settings.testing_mode,
             "user_token": zonemgr.get_user_token(username),
+            "website_url": settings.website_url,
           }
     return templates.TemplateResponse(request=request, name="user.html", context=ctx)
 
 
-@app.get('/headers', response_class=PlainTextResponse)
+@app.get('/headers')
 async def read_headers(request: Request):
     check_user(request)
     # TODO: check user belongs to group dns_admin
@@ -128,7 +129,7 @@ def get_api_key(
         detail="Invalid or missing API Key",
     )
 
-@app.post("/api/v1/update/{hostname}")
+@app.post("/update/{hostname}")
 async def update_dns(
         hostname: str, 
         request: Request,
@@ -136,11 +137,18 @@ async def update_dns(
         ip: Optional[str] = Query(None, description="The new IP address for the hostname. If not provided, the IP that originates the request is used."),
         ):
     username = zonemgr.find_user_for_token(api_key)
+    if not username:
+        return HTTPException(status_code=200, detail='Bad token')
     if not ip:
         ip = request.client.host
-    return {
-        "message": "DNS record updated successfully",
-        "username": username,
-        "hostname": hostname,
-        "ip": ip
-    }
+    try:
+        zonemgr.update_a_record(username, hostname, ip)
+    except RecordUpdateError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception:
+        raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail='Something bad happened. Try again later or try resetting your DNS zone.')
+    return {'status': 'OK',
+            'hostname': hostname,
+            'ip': ip}
