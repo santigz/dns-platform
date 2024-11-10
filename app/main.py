@@ -138,7 +138,11 @@ async def update_dns(
     if not username:
         return HTTPException(status_code=200, detail='Bad token')
     if not ip:
-        ip = request.client.host
+        if 'x-real-ip' in request.headers:
+            # If we are behind a reverse proxy
+            ip = request.headers['x-real-ip']
+        else:
+            ip = request.client.host
     try:
         zonemgr.update_a_record(username, hostname, ip)
     except BadZoneFile as e:
