@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+WEBSITE_URL='{{website_url}}'
+SERVICE='/etc/systemd/system/dyndns.service'
+TIMER='/etc/systemd/system/dyndns.timer'
+EXECUTABLE='/usr/local/bin/dyndns.sh'
+
+echo "=== DynDNS updater ===
+
+This script will ask your password to install the next files:
+
+$SERVICE
+$TIMER
+$EXECUTABLE
+"
+read -p 'Press enter to continue (Ctrl+c to cancel): ' < /dev/tty
+
+sudo tee "$SERVICE" > /dev/null <<EOF
+[Unit]
+Description=Dynamic DNS service for dns-portal
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$EXECUTABLE
+RemainAfterExit=false
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo tee "$TIMER" > /dev/null <<EOF
+[Unit]
+Description=Dynamic DNS timer for dns-portal
+
+[Timer]
+OnCalendar=minutely
+
+[Install]
+WantedBy=timers.target
+EOF
+
+sudo tee "$EXECUTABLE" > /dev/null <<EOF
+#!/usr/bin/env bash
+# This script performs DynDNS for dns-portal
+
+# Edit these variables for your needs
+API_KEY=''
+DOMAIN=''
+
+echo "DynDNS updating domain: \${DOMAIN}"
+curl -s -X POST "${WEBSITE_URL}/update/\${DOMAIN}?api_key=\${API_KEY}"
+EOF
+
+sudo chmod a+x $EXECUTABLE
+
+echo 'Files installed.'
+echo
+echo "Please, edit the this file with your data: $EXECUTABLE"
+echo "  API_KEY='your_api_key_here'"
+echo "  DOMAIN='your_domain_here'"
+echo
+echo "Then, you can start the timer:"
+echo "  sudo systemctl enable --now dyndns.timer"
+# sudo systemctl enable --now dyndns.service
+# sudo systemctl enable --now dyndns.timer

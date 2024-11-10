@@ -29,7 +29,7 @@ USER_TOKENS_DIR = '/etc/bind/user-tokens/'
 BACKUPS_DIR = '/etc/bind/backups/'
 
 # Templates globals
-TEMPLATES_DIR = '/code/templates/bind/'
+TEMPLATES_DIR = 'templates/bind/'
 ZONEFILE_TEMPLATE = 'main-zone.j2'
 NAMED_CONF_TEMPLATE = 'named.conf.j2'
 NAMED_CONF_LOCAL_TEMPLATE = 'named.conf.local.j2'
@@ -319,7 +319,7 @@ class ZoneManager(object):
             logger.error(f'Failed backup {bkp_dir}.')
 
     def zone_data_updating_record_a(self, username: str, hostname: str, ip: str, ttl=None) -> str:
-        logger.info(f'Updating record for user {username}: {hostname} {ip} {ttl}')
+        # logger.info(f'Updating record for user {username}: {hostname} {ip} {ttl}')
         zonefile = Path(USER_ZONES_DIR) / username
         if not zonefile.exists():
             logger.error(f'Failed updating record: zone file does not exist for user {username}')
@@ -395,6 +395,3 @@ class ZoneManager(object):
             if user_token == token:
                 return user_name
         return None
-
-    def update_rr_a(self, username, ip, ttl=None):
-        pass

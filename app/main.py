@@ -29,14 +29,12 @@ settings = Settings()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# For user tokens
-api_key_query = APIKeyQuery(name="api-key", auto_error=False)
-api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
-
-templates = Jinja2Templates(directory="templates/html/")
+templates = Jinja2Templates(directory="templates/")
 zonemgr = ZoneManager(settings.root_domain)
 
-TESTING = False
+# For user tokens
+api_key_query = APIKeyQuery(name="api_key", auto_error=False)
+api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 
 def check_user(request):
     username = request.headers.get('remote-user')
@@ -56,7 +54,7 @@ async def read_root(request: Request):
         ctx = {
                 "username": username,
               }
-        return templates.TemplateResponse(request=request, name="index.html", context=ctx)
+        return templates.TemplateResponse(request=request, name="html/index.html", context=ctx)
     ctx = {
             "username": username,
             "user_origin": zonemgr.user_zone_origin(username),
@@ -65,7 +63,7 @@ async def read_root(request: Request):
             "user_token": zonemgr.get_user_token(username),
             "website_url": settings.website_url,
           }
-    return templates.TemplateResponse(request=request, name="user.html", context=ctx)
+    return templates.TemplateResponse(request=request, name="html/user.html", context=ctx)
 
 
 @app.get('/headers')
@@ -143,12 +141,23 @@ async def update_dns(
         ip = request.client.host
     try:
         zonemgr.update_a_record(username, hostname, ip)
+    except BadZoneFile as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Bad domain name.')
     except RecordUpdateError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception:
+    except Exception as e:
+        logger.error(f'Error in dyndns:\n{e}')
         raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='Something bad happened. Try again later or try resetting your DNS zone.')
-    return {'status': 'OK',
+    return {'status': 'updated',
             'hostname': hostname,
             'ip': ip}
+
+
+
+
+@app.get('/dyndns_install.sh', response_class=PlainTextResponse)
+async def dyndns_install_script(request: Request):
+    ctx = {"website_url": settings.website_url}
+    return templates.TemplateResponse(request=request, name='dyndns_install.sh.j2', context=ctx)
